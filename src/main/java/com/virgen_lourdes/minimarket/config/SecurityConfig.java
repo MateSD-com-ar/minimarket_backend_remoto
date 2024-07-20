@@ -1,5 +1,6 @@
 package com.virgen_lourdes.minimarket.config;
 
+import com.virgen_lourdes.minimarket.entity.enums.Role;
 import com.virgen_lourdes.minimarket.jwt.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -31,9 +32,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth
                             .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/products/**").hasRole("ADMIN")
-                            .requestMatchers("/api/categories/**").hasRole("ADMIN")
-                            .anyRequest().authenticated();
+                            .requestMatchers("/api/users/**").hasAuthority(Role.ADMIN.name())
+//                            .requestMatchers("/api/products/**").hasRole("ADMIN")
+//                            .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                            .anyRequest().permitAll();
                 })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

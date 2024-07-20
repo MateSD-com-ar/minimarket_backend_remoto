@@ -2,8 +2,10 @@ package com.virgen_lourdes.minimarket.dto;
 
 import com.virgen_lourdes.minimarket.entity.User;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class UserDto {
 
     public Long id;
@@ -13,6 +15,7 @@ public class UserDto {
     public Boolean isActive;
 
     public UserDto(User user) {
+        this.id = user.getId();
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.role = user.getRole().name();
