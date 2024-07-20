@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.entity.Product;
+import com.virgen_lourdes.minimarket.entity.enums.RoleProduct;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.service.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +18,22 @@ public class ProductsService implements IProductService {
     //crear producto
     @Override
     public void saveProduct(Product product) {
-        if (productsRepository.existsByCode(product.getCode())) {
-            throw new RuntimeException("The provided code already exists"); //si ya existe un codigo en la bd lanzamos excepcion
-        }
-        try {
-            productsRepository.save(product);
-        } catch (Exception e) {
-            throw new RuntimeException("Error creating product");
+        if (product.getRoleProduct()== RoleProduct.Almacen){
+            if (productsRepository.existsByCode(product.getCode())) {
+                throw new RuntimeException("The provided code already exists"); //si ya existe un codigo en la bd lanzamos excepcion
+            }
+            try {
+                productsRepository.save(product);
+            } catch (Exception e) {
+                throw new RuntimeException("Error creating product. Check that there are no empty fields");
+            }
+        } else if (product.getRoleProduct()==RoleProduct.Verduleria || product.getRoleProduct()==RoleProduct.Carniceria){
+            try {
+                product.setCode(null);
+                productsRepository.save(product);
+            } catch (Exception e) {
+                throw new RuntimeException("Error creating product. Check that there are no empty fields");
+            }
         }
     }
 
@@ -59,19 +69,32 @@ public class ProductsService implements IProductService {
     public void editProduct(Long idProduct, Product product) {
         try {
             productsRepository.findById(idProduct).map(product2 -> {
-                product2.setName(product.getName());
-                product2.setDescription((product.getDescription()));
-                product2.setCode(product.getCode());
-                product2.setPrice(product.getPrice());
-                product2.setRoleProduct(product.getRoleProduct());
-                product2.setUnitMeasure(product.getUnitMeasure());
-                product2.setStock(product.getStock());
-                if (!product2.getCode().equals(product.getCode()) && productsRepository.existsByCode(product.getCode())) {
-                    throw new RuntimeException("The provided code already exists");
-                } else {
-                    productsRepository.save(product2);
-                    return "Edited producted";
+                if (product.getName() != null) {
+                    product2.setName(product.getName());
                 }
+                if (product.getDescription() != null) {
+                    product2.setDescription((product.getDescription()));
+                }
+                if (product.getCode() != null) {
+                    if (!product2.getCode().equals(product.getCode()) && productsRepository.existsByCode(product.getCode())) {
+                        throw new RuntimeException("The provided code already exists");
+                    }
+                    product2.setCode(product.getCode());
+                }
+                if (product.getPrice() != null) {
+                    product2.setPrice(product.getPrice());
+                }
+                if (product.getRoleProduct() != null) {
+                    product2.setRoleProduct(product.getRoleProduct());
+                }
+                if (product.getUnitMeasure() != null) {
+                    product2.setUnitMeasure(product.getUnitMeasure());
+                }
+
+                product2.setStock(product.getStock());
+
+                productsRepository.save(product2);
+                return product2;
             });
         } catch (Exception e) {
             throw new RuntimeException("Error edit product");

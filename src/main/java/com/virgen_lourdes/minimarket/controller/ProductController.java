@@ -2,6 +2,7 @@ package com.virgen_lourdes.minimarket.controller;
 
 import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.service.IProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -78,7 +79,7 @@ public class ProductController {
         }
     }
 
-    @PutMapping("/edit/idProduct")
+    @PutMapping("/edit/{idProduct}")
     ResponseEntity<?> editProduct(@PathVariable Long idProduct, @RequestBody Product product){
         try{
             productService.editProduct(idProduct, product);
