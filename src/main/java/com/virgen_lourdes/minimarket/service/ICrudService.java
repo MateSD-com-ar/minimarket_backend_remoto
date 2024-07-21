@@ -6,7 +6,7 @@ public interface ICrudService<RequestDto, ResponseDto, I> {
 
     ResponseDto create(RequestDto requestDto);
     List<ResponseDto> read(RequestDto requestDto);
-    ResponseDto update(RequestDto requestDto);
+    ResponseDto update(RequestDto requestDto, Long id);
     void delete(Long id);
 
 }

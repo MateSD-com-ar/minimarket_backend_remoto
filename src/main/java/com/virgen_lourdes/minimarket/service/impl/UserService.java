@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -19,6 +20,9 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
 
     @Autowired
     IUserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Override
     public UserDto create(UserDto userDto) {
@@ -38,9 +42,9 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
     }
 
     @Override
-    public UserDto update(UserDto userDto) {
+    public UserDto update(UserDto userDto, Long id) {
         try {
-            User user = userRepository.findById(userDto.getId())
+            User user = userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
             if (userDto.getUsername() != null) {
                 if (userRepository.existsByUsername(userDto.getUsername())) {
@@ -49,7 +53,7 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
                 user.setUsername(userDto.getUsername());
             }
             if (userDto.getPassword() != null) {
-                user.setPassword(userDto.getPassword());
+                user.setPassword(passwordEncoder.encode(userDto.getPassword()));
             }
             user = userRepository.save(user);
             return UserDto.of(user);
@@ -62,7 +66,7 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
     public void delete(Long id) {
         try {
             User user = userRepository.findById(id)
-                    .orElseThrow(() -> new NotFoundException("User not found"));
+                    .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
             user.setIsActive(false);
             userRepository.save(user);
         } catch (MethodArgumentTypeMismatchException e) {
@@ -73,7 +77,7 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserDetails userDetails = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
         return new org.springframework.security.core.userdetails.User(
                 userDetails.getUsername(),
                 "",
@@ -87,14 +91,14 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
                 .filter(user -> userDto.getId() == null ||
                         user.getId().equals(userDto.getId()))
                 .filter(user -> userDto.getUsername() == null ||
-                        user.getUsername().equalsIgnoreCase(userDto.getUsername()))
+                        user.getUsername().toLowerCase().contains((userDto.getUsername().toLowerCase())))
                 .filter(user -> userDto.getRole() == null ||
                         user.getRole().toString().equalsIgnoreCase(userDto.getRole()))
                 .filter(user -> userDto.getIsActive() == null ||
                         user.getIsActive().equals(userDto.getIsActive()))
                 .toList();
 
-        if (users.isEmpty()) {
+        if (filteredUsers.isEmpty()) {
             throw new NotFoundException("No se encontraron usuarios");
         }
         return filteredUsers;

@@ -1,6 +1,5 @@
 package com.virgen_lourdes.minimarket.jwt;
 
-import io.jsonwebtoken.Header;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
