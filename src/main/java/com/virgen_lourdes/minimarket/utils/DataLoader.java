@@ -1,4 +1,58 @@
 package com.virgen_lourdes.minimarket.utils;
 
-public class DataLoader {
+import com.virgen_lourdes.minimarket.entity.User;
+import com.virgen_lourdes.minimarket.entity.enums.Role;
+import com.virgen_lourdes.minimarket.repository.IUserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+
+@Component
+public class DataLoader implements CommandLineRunner {
+
+    @Autowired
+    private IUserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    UserData userData;
+
+    @Override
+    public void run(String... args) throws Exception {
+        loadData();
+    }
+
+    private void loadData() {
+        if (userRepository.count()==0){
+            User user1 = new User();
+            user1.setUsername("rafaelmarengo");
+            user1.setPassword(passwordEncoder.encode("agachatequevienenlospatos"));
+            user1.setRole(Role.ADMIN);
+            user1.setIsActive(true);
+            user1.setCreatedAt(LocalDateTime.now());
+            user1.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user1);
+            User user2 = new User();
+            user2.setUsername("joserojas");
+            user2.setPassword(passwordEncoder.encode("298743901983"));
+            user2.setRole(Role.EMPLOYEE);
+            user2.setIsActive(true);
+            user2.setCreatedAt(LocalDateTime.now());
+            user2.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user2);
+            User user3 = new User();
+            user3.setUsername("facundofunes");
+            user3.setPassword(passwordEncoder.encode("366285681992"));
+            user3.setRole(Role.EMPLOYEE);
+            user3.setIsActive(true);
+            user3.setCreatedAt(LocalDateTime.now());
+            user3.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user3);
+        }
+    }
 }
