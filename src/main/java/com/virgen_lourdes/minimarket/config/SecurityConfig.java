@@ -33,8 +33,7 @@ public class SecurityConfig {
                     auth
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/users/**").hasAuthority(Role.ADMIN.name())
-//                            .requestMatchers("/api/products/**").hasRole("ADMIN")
-//                            .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                            .requestMatchers("/products/**").permitAll()
                             .anyRequest().permitAll();
                 })
                 .sessionManagement(session -> session
