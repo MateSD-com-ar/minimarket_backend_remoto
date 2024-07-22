@@ -3,7 +3,6 @@ package com.virgen_lourdes.minimarket.entity;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-import jdk.jfr.Timestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
