@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.entity;
 
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
+import com.virgen_lourdes.minimarket.entity.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -29,16 +31,24 @@ public class Sale {
 
     private String CUIL;
     private LocalDateTime paymentDate;
+
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
+
     private Double discount;
     private Double interest;
+    private Double subtotal;
     private Double total;
-    private Boolean isActive;
-    //    private Details details;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SaleDetailsProduct> saleDetailsProducts;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
