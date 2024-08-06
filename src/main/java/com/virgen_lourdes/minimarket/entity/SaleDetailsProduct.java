@@ -21,11 +21,13 @@ public class SaleDetailsProduct {
     private Double amount;
     private Double unitPrice;
     private Double totalPriceDetail;
-    @ManyToOne
-    @JoinColumn(name = "sale_id", nullable = false)
-    private List<Sale> sale;
+
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
-    private List<Product> product;
+    private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "sale_id", nullable = false)
+    private Sale sale;
 
 }
