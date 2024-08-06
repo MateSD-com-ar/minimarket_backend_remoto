@@ -23,9 +23,9 @@ public class SaleDetailsProduct {
     private Double totalPriceDetail;
     @ManyToOne
     @JoinColumn(name = "sale_id", nullable = false)
-    private List<Sale> sale;
+    private Sale sale;
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
-    private List<Product> product;
+    private Product product;
 
 }
