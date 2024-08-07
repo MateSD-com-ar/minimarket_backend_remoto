@@ -31,7 +31,7 @@ public class DataLoader implements CommandLineRunner {
         if (userRepository.count()==0){
             User user1 = new User();
             user1.setUsername("rafaelmarengo");
-            user1.setPassword(passwordEncoder.encode("agachatequevienenlospatos"));
+            user1.setPassword(passwordEncoder.encode("328459251987"));
             user1.setRole(Role.ADMIN);
             user1.setIsActive(true);
             user1.setCreatedAt(LocalDateTime.now());
