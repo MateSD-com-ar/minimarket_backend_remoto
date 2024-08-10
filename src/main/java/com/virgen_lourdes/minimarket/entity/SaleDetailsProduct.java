@@ -1,5 +1,6 @@
 package com.virgen_lourdes.minimarket.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.virgen_lourdes.minimarket.validation.ValidProduct;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"sale"})
 @Table(name = "saledetailsproduct")
 public class SaleDetailsProduct {
 

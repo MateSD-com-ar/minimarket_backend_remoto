@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.controller;
 
 import com.virgen_lourdes.minimarket.entity.Product;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.service.IProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,16 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/get/almacen")
+    ResponseEntity<?> getProductsAlmacen(){
+        try{
+            List<Product> productList = productService.getProductsAlmacen();
+            return ResponseEntity.ok(productList);
+        } catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/delete/{idProduct}")
     ResponseEntity<?> deleteProduct(@PathVariable Long idProduct){
         try{
@@ -84,10 +95,11 @@ public class ProductController {
         try{
             productService.editProduct(idProduct, product);
             return ResponseEntity.ok(productService.getProduct(idProduct));
-        } catch (RuntimeException e){
+        } catch (ProductNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
 
 }
