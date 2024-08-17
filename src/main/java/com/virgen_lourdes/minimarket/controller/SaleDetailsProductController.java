@@ -2,7 +2,9 @@ package com.virgen_lourdes.minimarket.controller;
 
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.service.ISaleDetailsProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,12 +50,14 @@ public class SaleDetailsProductController {
     }
 
     @PostMapping("/create")
-    ResponseEntity<?> createDetails(@RequestBody SaleDetailsProductRequestDto saleDetailsProductRequestDto){
+    ResponseEntity<?> createDetails(@Valid @RequestBody SaleDetailsProductRequestDto saleDetailsProductRequestDto){
         try{
             saleDetailsProductService.createDetails(saleDetailsProductRequestDto);
             return ResponseEntity.ok("Details created");
-        } catch (RuntimeException e){
+        } catch (ProductNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 

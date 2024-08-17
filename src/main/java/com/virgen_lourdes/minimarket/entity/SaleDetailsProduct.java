@@ -20,16 +20,12 @@ public class SaleDetailsProduct {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idDetails;
-    private Double amount;
+    private Double quantity;
     private Double unitPrice;
     private Double totalPriceDetail;
 
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
     private Product product;
-
-    @ManyToOne
-    @JoinColumn(name = "sale_id", nullable = false)
-    private Sale sale;
 
 }

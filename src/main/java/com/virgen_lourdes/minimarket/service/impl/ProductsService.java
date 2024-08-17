@@ -2,6 +2,7 @@ package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.enums.RoleProduct;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductCreationException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.service.IProductService;
@@ -21,20 +22,24 @@ public class ProductsService implements IProductService {
     public void saveProduct(Product product) {
         if (product.getRoleProduct()== RoleProduct.Almacen){
             if (productsRepository.existsByCode(product.getCode())) {
-                throw new RuntimeException("The provided code already exists"); //si ya existe un codigo en la bd lanzamos excepcion
+                throw new ProductCreationException("The provided code already exists"); //si ya existe un codigo en la bd lanzamos excepcion
             }
             try {
                 productsRepository.save(product);
             } catch (Exception e) {
-                throw new RuntimeException("Error creating product. Check that there are no empty fields");
+                throw new ProductCreationException("Error creating product. Check that there are no empty fields");
             }
-        } else if (product.getRoleProduct()==RoleProduct.Verduleria || product.getRoleProduct()==RoleProduct.Carniceria){
+        }
+        if (product.getRoleProduct()==RoleProduct.Verduleria || product.getRoleProduct()==RoleProduct.Carniceria){
             try {
                 product.setCode(null);
                 productsRepository.save(product);
             } catch (Exception e) {
-                throw new RuntimeException("Error creating product. Check that there are no empty fields");
+                throw new ProductCreationException("Error creating product. Check that there are no empty fields");
             }
+        }
+        if (product.getRoleProduct()!=RoleProduct.Almacen && product.getRoleProduct()!=RoleProduct.Carniceria && product.getRoleProduct()!= RoleProduct.Verduleria){
+            throw new ProductCreationException("Error creating product. Check that there are no empty fields or that the fields are correctly completed");
         }
     }
 

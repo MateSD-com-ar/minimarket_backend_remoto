@@ -49,7 +49,7 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
     private Double calculateTotal(List<SaleDetailsProduct> saleDetailsProducts) {
         Double totalPrice = saleDetailsProducts.stream()
-                .mapToDouble(detail -> detail.getTotalPriceDetail() * detail.getAmount())
+                .mapToDouble(detail -> detail.getTotalPriceDetail() * detail.getQuantity())
                 .sum();
 
         DecimalFormat df = new DecimalFormat("#.##");
