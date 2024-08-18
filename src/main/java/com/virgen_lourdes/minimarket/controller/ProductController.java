@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.controller;
 
 import com.virgen_lourdes.minimarket.entity.Product;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductCreationException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.service.IProductService;
 import jakarta.validation.Valid;
@@ -10,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -81,12 +84,12 @@ public class ProductController {
     }
 
     @PostMapping("/create")
-    ResponseEntity<?> createProduct(@RequestBody Product product){
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
         try{
             productService.saveProduct(product);
             return ResponseEntity.ok("Product create");
-        } catch (RuntimeException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (ProductCreationException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
