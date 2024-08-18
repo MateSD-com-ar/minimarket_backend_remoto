@@ -10,6 +10,7 @@ import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundExcepti
 import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.repository.IUserRepository;
 import com.virgen_lourdes.minimarket.service.ICrudService;
+import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -29,22 +30,26 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
     @Override
     public SaleResponseDto create(SaleRequestDto saleRequestDto) {
-        User user = userRepository.findById(saleRequestDto.getUserId())
-                .orElseThrow(() -> new NotFoundException("No se encontró al empleado vendedor con el ID proporcionado"));
+        try {
+            User user = userRepository.findById(saleRequestDto.getUserId())
+                    .orElseThrow(() -> new NotFoundException("No se encontró al empleado vendedor con el ID proporcionado"));
 
-        Double total = calculateTotal(saleRequestDto.getSaleDetailsProducts());
-
-        Sale sale = Sale.builder()
-                .CUIL(saleRequestDto.getCUIL())
-                .client(saleRequestDto.getClient())
-                .subtotal(total)
-                .total(total)
-                .status(Status.PENDING)
-                .user(user)
-                .saleDetailsProducts(saleRequestDto.getSaleDetailsProducts())
-                .build();
-        saleRepository.save(sale);
-        return SaleResponseDto.of(sale);
+            Double total = calculateTotal(saleRequestDto.getSaleDetailsProducts());
+            System.out.println(saleRequestDto.getSaleDetailsProducts());
+            Sale sale = Sale.builder()
+                    .CUIL(saleRequestDto.getCUIL())
+                    .client(saleRequestDto.getClient())
+                    .subtotal(total)
+                    .total(total)
+                    .status(Status.PENDING)
+                    .user(user)
+                    .saleDetailsProducts(saleRequestDto.getSaleDetailsProducts())
+                    .build();
+            saleRepository.save(sale);
+            return SaleResponseDto.of(sale);
+        } catch (ValidationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     private Double calculateTotal(List<SaleDetailsProduct> saleDetailsProducts) {
