@@ -7,23 +7,14 @@ import jakarta.validation.ConstraintValidatorContext;
 
 // Clase que implementa la lógica de validación
 public class ProductValidator implements ConstraintValidator<ValidProduct, Product> {
-    /*@Override
-    public boolean isValid(Product product, ConstraintValidatorContext constraintValidatorContext) {
-        if(product.getRoleProduct()== RoleProduct.Verduleria || product.getRoleProduct() == RoleProduct.Carniceria){ // Validación para Verduleria y Carniceria: solo name y description es obligatorio
-            return product.getName()!= null && !product.getName().isEmpty() && product.getDescription()!=null && !product.getDescription().isEmpty() && product.getPrice()!=null && product.getPrice()!=0;
-        } else if(product.getRoleProduct() == RoleProduct.Almacen){ // Validación para Almacen: todos los campos excepto unitMeasure son obligatorios
-            return product.getName()!= null && !product.getName().isEmpty() &&
-                    product.getCode()!=null && !product.getCode().isEmpty() &&
-                    product.getPrice() != null && product.getPrice()>0 &&
-                    product.getStock()>0 && product.getDescription() != null && !product.getDescription().isEmpty();
-        }
-        return true;
-    }
-    */
+
     @Override
     public boolean isValid(Product product, ConstraintValidatorContext context) {
         if (product == null) {
-            return true;
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Product cannot be null")
+                    .addConstraintViolation();
+            return false;
         }
 
         boolean isValid = true;
@@ -50,6 +41,11 @@ public class ProductValidator implements ConstraintValidator<ValidProduct, Produ
                 context.buildConstraintViolationWithTemplate("All fields except unitMeasure are required for Almacen")
                         .addConstraintViolation();
             }
+        } else {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Invalid RoleProduct")
+                    .addConstraintViolation();
+            return false;
         }
 
         return isValid;
