@@ -9,7 +9,7 @@ public interface ISaleDetailsProductService {
 
     public List<SaleDetailsProduct> getAllDetails();
     public SaleDetailsProduct getDetailsById(Long idDetails);
-    public void createDetails(SaleDetailsProductRequestDto saleDetailsProductRequestDto);
+    public SaleDetailsProduct createDetails(SaleDetailsProductRequestDto saleDetailsProductRequestDto);
     public void deleteDetails (Long idDetails);
     public void editDetails (Long idDetails, SaleDetailsProductRequestDto saleDetailsProductRequestDto);
 

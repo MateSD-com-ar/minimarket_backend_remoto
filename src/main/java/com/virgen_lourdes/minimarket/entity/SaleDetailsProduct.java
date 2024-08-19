@@ -1,13 +1,10 @@
 package com.virgen_lourdes.minimarket.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.virgen_lourdes.minimarket.validation.ValidProduct;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Entity
 @Data
@@ -27,5 +24,9 @@ public class SaleDetailsProduct {
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_sale", nullable = false)
+    private Sale sale;
 
 }

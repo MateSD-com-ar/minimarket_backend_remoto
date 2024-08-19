@@ -1,6 +1,5 @@
 package com.virgen_lourdes.minimarket.dto.requestDto;
 
-import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
 import com.virgen_lourdes.minimarket.entity.enums.Status;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +22,7 @@ public class SaleRequestDto {
     @Size(min = 3, message = "El nombre debe tener al menos 3 caracteres")
     private String client;
 
-    private String CUIL;
+    private String cuil;
     private LocalDateTime paymentDate;
     private PaymentMethod paymentMethod;
     private Double discount;
@@ -36,7 +35,7 @@ public class SaleRequestDto {
     private Long userId;
 
     @NotEmpty(message = "La venta debe tener al menos un producto")
-    private List<SaleDetailsProduct> saleDetailsProducts;
+    private List<SaleDetailsProductRequestDto> saleDetailsProducts;
 
     private LocalDateTime createdAt;
 
