@@ -43,7 +43,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     @Override
-    public void createDetails(SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
+    public SaleDetailsProduct createDetails(SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
 
         SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
         saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
@@ -51,7 +51,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
         saleDetailsProduct.setUnitPrice(saleDetailsProductRequestDto.getUnitPrice());
         saleDetailsProduct.setProduct(productsRepository.findById(saleDetailsProductRequestDto.getProduct())
                 .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found")));
-        saleDetailsProductRepository.save(saleDetailsProduct);
+        return saleDetailsProductRepository.save(saleDetailsProduct);
     }
 
     @Override
