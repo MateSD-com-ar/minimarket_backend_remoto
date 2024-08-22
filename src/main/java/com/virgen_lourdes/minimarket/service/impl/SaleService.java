@@ -223,7 +223,9 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
 
     List<SaleDetailsProduct> createDetailsProduct(List<SaleDetailsProductRequestDto> saleDetailsProducts, Sale sale) {
-        return saleDetailsProducts.stream().map(item -> {
+        //return saleDetailsProducts.stream().map(item -> {
+            return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
+            /*
             SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
             if (item.getIdDetails() != null) saleDetailsProduct.setIdDetails(item.getIdDetails());
             saleDetailsProduct.setQuantity(item.getQuantity());
@@ -233,6 +235,7 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                     .orElseThrow(() -> new NotFoundException("Product not found")));
             saleDetailsProduct.setSale(sale);
             return saleDetailsProduct;
-        }).collect(Collectors.toList());
+             */
+        //}).collect(Collectors.toList());
     }
 }

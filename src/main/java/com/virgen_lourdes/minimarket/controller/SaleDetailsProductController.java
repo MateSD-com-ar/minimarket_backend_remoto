@@ -48,7 +48,7 @@ public class SaleDetailsProductController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-
+    /*
     @PostMapping("/create")
     ResponseEntity<?> createDetails(@Valid @RequestBody SaleDetailsProductRequestDto saleDetailsProductRequestDto){
         try{
@@ -70,5 +70,5 @@ public class SaleDetailsProductController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-
+*/
 }

@@ -15,10 +15,8 @@ public class SaleDetailsProductRequestDto {
     @NotNull(message = "Quantity must not be null")
     @Positive(message = "Quantity must be greater than zero")
     private Double quantity;
-    @NotNull(message = "UnitPrice must not be null")
     @Positive(message = "UnitPrice must be greater than zero")
     private Double unitPrice;
-    @NotNull(message = "TotalPriceDetail must not be null")
     @Positive(message = "TotalPriceDetail must be greater than zero")
     private Double totalPriceDetail;
     @NotNull(message = "Product ID must not be null")

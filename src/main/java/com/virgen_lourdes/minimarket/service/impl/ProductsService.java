@@ -134,7 +134,7 @@ public class ProductsService implements IProductService {
     //traer producto por codigo
     @Override
     public Product getProductCode(String code) {
-        return productsRepository.findByCode(code).orElseThrow(() -> new RuntimeException("There is no product with that name"));
+        return productsRepository.findByCode(code).orElseThrow(() -> new RuntimeException("There is no product with that code"));
     }
 
     @Override
