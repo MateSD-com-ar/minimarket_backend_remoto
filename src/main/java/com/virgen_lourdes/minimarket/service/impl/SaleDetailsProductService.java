@@ -1,6 +1,8 @@
 package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto;
+import com.virgen_lourdes.minimarket.entity.Product;
+import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SaleDetailsProductService implements ISaleDetailsProductService {
@@ -43,15 +46,20 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     @Override
-    public SaleDetailsProduct createDetails(SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
-
+    public List<SaleDetailsProduct> createDetails(List<SaleDetailsProductRequestDto> saleDetailsProductRequestDto, Sale sale) {
+        return saleDetailsProductRequestDto.stream().map(item -> {
+        if (item.getIdDetails() != null) item.setIdDetails(item.getIdDetails());
+        Product product = productsRepository.findById(item.getProduct())
+                .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found"));
         SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
-        saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
-        saleDetailsProduct.setTotalPriceDetail(saleDetailsProductRequestDto.getTotalPriceDetail());
-        saleDetailsProduct.setUnitPrice(saleDetailsProductRequestDto.getUnitPrice());
-        saleDetailsProduct.setProduct(productsRepository.findById(saleDetailsProductRequestDto.getProduct())
-                .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found")));
+        saleDetailsProduct.setQuantity(item.getQuantity());
+        saleDetailsProduct.setUnitPrice(product.getPrice());
+        saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
+        saleDetailsProduct.setProduct(product);
+        saleDetailsProduct.setSale(sale);
+
         return saleDetailsProductRepository.save(saleDetailsProduct);
+        }).collect(Collectors.toList());
     }
 
     @Override
