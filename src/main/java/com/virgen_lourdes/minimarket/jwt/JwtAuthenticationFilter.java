@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         // Check if the request is for authentication or registration
-        if (request.getServletPath().contains("/auth")) {
+        if (request.getServletPath().contains("/auth/login")) {
             filterChain.doFilter(request, response);
             return;
         }

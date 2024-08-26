@@ -1,10 +1,9 @@
 package com.virgen_lourdes.minimarket.dto.responseDto;
 
-import com.virgen_lourdes.minimarket.dto.UserDto;
 import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
-import com.virgen_lourdes.minimarket.entity.enums.Status;
+import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,8 +23,8 @@ public class SaleResponseDto {
     private Double interest;
     private Double subtotal;
     private Double total;
-    private Status status;
-    private UserDto user;
+    private PaymentStatus paymentStatus;
+    private UserResponseDto user;
     private List<SaleDetailsProduct> saleDetailsProducts;
     private LocalDateTime createdAt;
 
@@ -39,8 +38,8 @@ public class SaleResponseDto {
         this.interest = sale.getInterest();
         this.subtotal = sale.getSubtotal();
         this.total = sale.getTotal();
-        this.status = sale.getStatus();
-        this.user = UserDto.of(sale.getUser());
+        this.paymentStatus = sale.getPaymentStatus();
+        this.user = UserResponseDto.of(sale.getUser());
         this.saleDetailsProducts = sale.getSaleDetailsProducts();
         this.createdAt = sale.getCreatedAt();
     }

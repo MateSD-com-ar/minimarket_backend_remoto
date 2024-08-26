@@ -1,7 +1,7 @@
 package com.virgen_lourdes.minimarket.entity;
 
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
-import com.virgen_lourdes.minimarket.entity.enums.Status;
+import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -41,7 +41,7 @@ public class Sale {
     private Double total;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private PaymentStatus paymentStatus;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

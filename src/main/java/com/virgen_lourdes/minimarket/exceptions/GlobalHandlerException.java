@@ -2,6 +2,7 @@ package com.virgen_lourdes.minimarket.exceptions;
 
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.AuthenticationFailedException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundException;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import jakarta.validation.ValidationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -64,4 +65,11 @@ public class GlobalHandlerException {
                 .toList();
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleProductNotFoundException(ProductNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
 }

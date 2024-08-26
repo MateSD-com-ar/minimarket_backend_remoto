@@ -4,6 +4,7 @@ import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto
 import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
+import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleDetailsProductRepository;
@@ -11,6 +12,7 @@ import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.service.ISaleDetailsProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.query.JSqlParserUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,47 +50,52 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     @Override
     public List<SaleDetailsProduct> createDetails(List<SaleDetailsProductRequestDto> saleDetailsProductRequestDto, Sale sale) {
         return saleDetailsProductRequestDto.stream().map(item -> {
-        if (item.getIdDetails() != null) item.setIdDetails(item.getIdDetails());
-        Product product = productsRepository.findById(item.getProduct())
-                .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found"));
-        SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
-        saleDetailsProduct.setQuantity(item.getQuantity());
-        saleDetailsProduct.setUnitPrice(product.getPrice());
-        saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
-        saleDetailsProduct.setProduct(product);
-        saleDetailsProduct.setSale(sale);
+            Product product = productsRepository.findById(item.getProduct())
+                    .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found"));
+            SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
+            saleDetailsProduct.setQuantity(item.getQuantity());
+            saleDetailsProduct.setUnitPrice(product.getPrice());
+            saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
+            saleDetailsProduct.setProduct(product);
+            saleDetailsProduct.setSale(sale);
 
-        return saleDetailsProductRepository.save(saleDetailsProduct);
+            return saleDetailsProduct;
         }).collect(Collectors.toList());
     }
 
     @Override
     public void deleteDetails(Long idDetails) {
-        try{
+        try {
+            saleDetailsProductRepository.findById(idDetails).
+                    orElseThrow(() -> new NotFoundException("Details not found"));
             saleDetailsProductRepository.deleteById(idDetails);
-        } catch (Exception e){
+        } catch (NotFoundException e) {
+            throw new NotFoundException(e.getMessage());
+        } catch (Exception e) {
             throw new RuntimeException("Error deleted details");
         }
     }
 
     @Override
     public void editDetails(Long idDetails, SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
-        try{
-            SaleDetailsProduct saleDetailsProduct = saleDetailsProductRepository.findById(idDetails).orElseThrow(() -> new RuntimeException("Details not found"));
-            if (saleDetailsProductRequestDto.getQuantity()!=null){
+        try {
+            SaleDetailsProduct saleDetailsProduct = saleDetailsProductRepository.findById(idDetails)
+                    .orElseThrow(() -> new RuntimeException("Details not found"));
+            if (saleDetailsProductRequestDto.getProduct() != null) {
+                saleDetailsProduct.setProduct(productsRepository.findById(saleDetailsProductRequestDto.getProduct())
+                        .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found")));
+            }
+            if (saleDetailsProductRequestDto.getUnitPrice() != null) {
+                saleDetailsProduct.setUnitPrice(saleDetailsProduct.getProduct().getPrice());
+            }
+            if (saleDetailsProductRequestDto.getQuantity() != null) {
                 saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
-            }
-            if (saleDetailsProductRequestDto.getTotalPriceDetail()!=null){
-                saleDetailsProduct.setTotalPriceDetail(saleDetailsProductRequestDto.getTotalPriceDetail());
-            }
-            if (saleDetailsProductRequestDto.getUnitPrice()!=null){
-                saleDetailsProduct.setUnitPrice(saleDetailsProductRequestDto.getUnitPrice());
-            }
-            if (saleDetailsProductRequestDto.getProduct()!=null){
-                saleDetailsProduct.setProduct(productsRepository.findById(saleDetailsProductRequestDto.getProduct()).orElse(null));
+                saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
             }
             saleDetailsProductRepository.save(saleDetailsProduct);
-        } catch (Exception e){
+        } catch (ProductNotFoundException e) {
+            throw new ProductNotFoundException(e.getMessage());
+        } catch (Exception e) {
             throw new RuntimeException("Error edit details. Check that there are no empty fields");
         }
     }

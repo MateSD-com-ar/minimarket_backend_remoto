@@ -8,9 +8,10 @@ import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.User;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
-import com.virgen_lourdes.minimarket.entity.enums.Status;
+import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundException;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
+import com.virgen_lourdes.minimarket.repository.ISaleDetailsProductRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.repository.IUserRepository;
 import com.virgen_lourdes.minimarket.service.ICrudService;
@@ -22,7 +23,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto, Long> {
@@ -37,6 +38,9 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
     private SaleDetailsProductService saleDetailsProductService;
 
     @Autowired
+    private ISaleDetailsProductRepository saleDetailsProductRepository;
+
+    @Autowired
     private IProductsRepository productsRepository;
 
     @Override
@@ -47,11 +51,10 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
 //            List<SaleDetailsProduct> saleDetailsProduct = createDetailsProduct(saleRequestDto.getSaleDetailsProducts());
 
-
             Sale sale = Sale.builder()
                     .CUIL(saleRequestDto.getCuil())
                     .client(saleRequestDto.getClient())
-                    .status(Status.PENDING)
+                    .paymentStatus(PaymentStatus.PENDING)
                     .user(user)
                     .build();
 
@@ -100,11 +103,11 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
             // Actualizar interes si se proporciona y si la venta está en crédito
             if (saleRequestDto.getInterest() != null) {
-                Status currentStatus = sale.getStatus();
-                Status requestedStatus = saleRequestDto.getStatus();
+                PaymentStatus currentPaymentStatus = sale.getPaymentStatus();
+                PaymentStatus requestedPaymentStatus = saleRequestDto.getPaymentStatus();
 
-                if (Status.CREDIT.equals(currentStatus) || Status.CREDIT.equals(requestedStatus)) {
-                    sale.setTotal(sale.getTotal() + saleRequestDto.getInterest());
+                if (PaymentStatus.CREDIT.equals(currentPaymentStatus) || PaymentStatus.CREDIT.equals(requestedPaymentStatus)) {
+//                    sale.setTotal(sale.getTotal() + saleRequestDto.getInterest());
                     sale.setInterest(saleRequestDto.getInterest());
                 } else {
                     throw new ValidationException("La venta necesita estar a crédito para agregar intereses");
@@ -113,25 +116,25 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
             // Actualizar descuento si se proporciona, a su vez actualizar el total de la venta
             if (saleRequestDto.getDiscount() != null) {
-                sale.setTotal(sale.getTotal() - saleRequestDto.getDiscount());
+//                sale.setTotal(sale.getTotal() - saleRequestDto.getDiscount());
                 sale.setDiscount(saleRequestDto.getDiscount());
             }
 
             // Actualizar el estado de la venta, el método de pago es requerido
-            if (saleRequestDto.getStatus() != null) {
-                if (sale.getStatus().equals(Status.PAID)) {
+            if (saleRequestDto.getPaymentStatus() != null) {
+                if (sale.getPaymentStatus().equals(PaymentStatus.PAID)) {
                     throw new ValidationException("No se puede cambiar el estado de una venta pagada");
                 }
-                if (sale.getStatus().equals(Status.CREDIT) && saleRequestDto.getStatus().equals(Status.PENDING)) {
+                if (sale.getPaymentStatus().equals(PaymentStatus.CREDIT) && saleRequestDto.getPaymentStatus().equals(PaymentStatus.PENDING)) {
                     throw new ValidationException("No se puede cambiar el estado de la venta a pendiente");
                 }
-                if (saleRequestDto.getStatus().equals(Status.CREDIT)) {
-                    sale.setStatus(Status.CREDIT);
+                if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.CREDIT)) {
+                    sale.setPaymentStatus(PaymentStatus.CREDIT);
                     sale.setPaymentMethod(PaymentMethod.CURRENT_ACCOUNT);
                 }
-                if (saleRequestDto.getStatus().equals(Status.PAID)) {
+                if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PAID)) {
                     if (saleRequestDto.getPaymentMethod() != null) {
-                        sale.setStatus(Status.PAID);
+                        sale.setPaymentStatus(PaymentStatus.PAID);
                         sale.setPaymentMethod(saleRequestDto.getPaymentMethod());
                         sale.setPaymentDate(LocalDateTime.now());
                     } else {
@@ -142,14 +145,24 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
             // Actualizar los detalles de la venta si se proporciona y si el estado de la venta es pendiente
             if (saleRequestDto.getSaleDetailsProducts() != null) {
-                if (sale.getStatus().equals(Status.PENDING)) {
+                if (sale.getPaymentStatus().equals(PaymentStatus.PENDING)) {
                     updateSaleDetails(sale, saleRequestDto.getSaleDetailsProducts());
+                    sale.setSubtotal(calculateTotal(sale.getSaleDetailsProducts()));
                 } else {
                     throw new ValidationException("No se pueden actualizar los productos de una venta cerrada");
                 }
             }
             if (saleRequestDto.getSubtotal() != null) sale.setSubtotal(saleRequestDto.getSubtotal());
             if (saleRequestDto.getTotal() != null) sale.setTotal(saleRequestDto.getTotal());
+
+            // Actualizar precio total de la venta
+            if (sale.getInterest() != null) {
+                sale.setTotal(sale.getSubtotal() + sale.getInterest());
+            } else if (sale.getDiscount() != null) {
+                sale.setTotal(sale.getSubtotal() - sale.getDiscount());
+            } else {
+                sale.setTotal(sale.getSubtotal());
+            }
 
             sale = saleRepository.save(sale);
             return SaleResponseDto.of(sale);
@@ -161,30 +174,36 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
     public void updateSaleDetails(Sale sale, List<SaleDetailsProductRequestDto> newDetailsDtos) {
         List<SaleDetailsProduct> existingDetails = sale.getSaleDetailsProducts();
 
-        // Crear una lista de nuevas entidades a partir de los DTOs
-        List<SaleDetailsProduct> newDetails = createDetailsProduct(newDetailsDtos, sale);
+        // Filtrar los IDs de detalles existentes
+        List<Long> dtoIds = newDetailsDtos.stream()
+                .map(SaleDetailsProductRequestDto::getIdDetails)
+                .filter(Objects::nonNull)
+                .toList();
 
-        // Eliminar detalles que ya no están en la nueva lista
-        existingDetails.removeIf(detail -> !newDetails.contains(detail));
+        // Filtrar los detalles existentes que no están en la lista de IDs
+        List<SaleDetailsProduct> detailsToRemove = existingDetails.stream()
+                .filter(detail -> !dtoIds.contains(detail.getIdDetails()))
+                .toList();
 
-        // Agregar o actualizar los detalles de la nueva lista
-        for (SaleDetailsProduct newDetail : newDetails) {
-            if (!existingDetails.contains(newDetail)) {
-                existingDetails.add(newDetail);
+        // Eliminar los detalles que ya no están presentes en la lista de DTOs
+        detailsToRemove.forEach(detail -> sale.getSaleDetailsProducts().remove(detail));
+
+        // Recorrer la lista de nuevos detalles y actualizar o crear los detalles de la venta
+        for (SaleDetailsProductRequestDto newDetailsDto : newDetailsDtos) {
+            if (newDetailsDto.getIdDetails() != null) {
+                saleDetailsProductService.editDetails(newDetailsDto.getIdDetails(), newDetailsDto);
             } else {
-                // Actualizar los detalles existentes si es necesario
-//                SaleDetailsProduct existingDetail = existingDetails.get(existingDetails.indexOf(newDetail));
-//                updateExistingDetail(existingDetail, newDetail);
-                SaleDetailsProductRequestDto requestDto = newDetailsDtos.stream()
-                        .filter(dto -> dto.getIdDetails().equals(newDetail.getIdDetails()))
-                        .findFirst()
-                        .orElseThrow(() -> new NotFoundException("No se encontró el detalle de venta con el ID proporcionado"));
-                System.out.println(requestDto);
-                saleDetailsProductService.editDetails(requestDto.getIdDetails(), requestDto);
+                Product product = productsRepository.findById(newDetailsDto.getProduct())
+                        .orElseThrow(() -> new NotFoundException("Product does not exist or product not found"));
+                SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
+                saleDetailsProduct.setQuantity(newDetailsDto.getQuantity());
+                saleDetailsProduct.setUnitPrice(product.getPrice());
+                saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
+                saleDetailsProduct.setProduct(product);
+                saleDetailsProduct.setSale(sale);
+                sale.getSaleDetailsProducts().add(saleDetailsProduct);
             }
         }
-
-        sale.setSaleDetailsProducts(existingDetails);
     }
 
     @Override
@@ -206,8 +225,8 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                         sale.getPaymentDate().equals(saleRequestDto.getPaymentDate()))
                 .filter(sale -> saleRequestDto.getPaymentMethod() == null || sale.getPaymentMethod() != null &&
                         sale.getPaymentMethod().equals(saleRequestDto.getPaymentMethod()))
-                .filter(sale -> saleRequestDto.getStatus() == null ||
-                        sale.getStatus().equals(saleRequestDto.getStatus()))
+                .filter(sale -> saleRequestDto.getPaymentStatus() == null ||
+                        sale.getPaymentStatus().equals(saleRequestDto.getPaymentStatus()))
                 .filter(sale -> saleRequestDto.getUserId() == null ||
                         sale.getUser().getId().equals(saleRequestDto.getUserId()))
                 .filter(sale -> saleRequestDto.getCreatedAt() == null ||
@@ -223,19 +242,6 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
 
     List<SaleDetailsProduct> createDetailsProduct(List<SaleDetailsProductRequestDto> saleDetailsProducts, Sale sale) {
-        //return saleDetailsProducts.stream().map(item -> {
-            return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
-            /*
-            SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
-            if (item.getIdDetails() != null) saleDetailsProduct.setIdDetails(item.getIdDetails());
-            saleDetailsProduct.setQuantity(item.getQuantity());
-            saleDetailsProduct.setTotalPriceDetail(item.getTotalPriceDetail());
-            saleDetailsProduct.setUnitPrice(item.getUnitPrice());
-            saleDetailsProduct.setProduct(productsRepository.findById(item.getProduct())
-                    .orElseThrow(() -> new NotFoundException("Product not found")));
-            saleDetailsProduct.setSale(sale);
-            return saleDetailsProduct;
-             */
-        //}).collect(Collectors.toList());
+        return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
     }
 }

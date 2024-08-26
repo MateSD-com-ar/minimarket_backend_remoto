@@ -1,5 +1,6 @@
 package com.virgen_lourdes.minimarket.auth;
 
+import com.virgen_lourdes.minimarket.dto.responseDto.UserResponseDto;
 import com.virgen_lourdes.minimarket.entity.User;
 import com.virgen_lourdes.minimarket.entity.enums.Role;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.AuthenticationFailedException;
@@ -35,6 +36,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         try {
             User user = User.builder()
+                    .name(request.getName())
                     .username(request.getUsername())
                     .password(passwordEncoder.encode(request.getPassword()))
                     .role(Role.EMPLOYEE)
@@ -46,7 +48,7 @@ public class AuthService {
 
             return AuthResponse.builder()
                     .accessToken(token)
-                    .user(user)
+                    .user(UserResponseDto.of(user))
                     .build();
         } catch (DataIntegrityViolationException e) {
             throw new DataIntegrityViolationException("Ese usuario ya existe. Por favor, elige otro nombre de usuario.");
@@ -75,7 +77,7 @@ public class AuthService {
 
             return AuthResponse.builder()
                     .accessToken(token)
-                    .user(user)
+                    .user(UserResponseDto.of(user))
                     .build();
         } catch (BadCredentialsException e) {
             throw new AuthenticationFailedException("Nombre de usuario o contraseña incorrectos");
