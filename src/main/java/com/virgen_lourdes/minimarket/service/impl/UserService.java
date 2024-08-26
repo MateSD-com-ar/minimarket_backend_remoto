@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.dto.UserDto;
+import com.virgen_lourdes.minimarket.dto.responseDto.UserResponseDto;
 import com.virgen_lourdes.minimarket.entity.User;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundException;
 import com.virgen_lourdes.minimarket.repository.IUserRepository;
@@ -16,7 +17,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.List;
 
 @Service
-public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDetailsService {
+public class UserService implements ICrudService<UserDto, UserResponseDto, Long>, UserDetailsService {
 
     @Autowired
     IUserRepository userRepository;
@@ -25,16 +26,16 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
     PasswordEncoder passwordEncoder;
 
     @Override
-    public UserDto create(UserDto userDto) {
+    public UserResponseDto create(UserDto userDto) {
         return null;
     }
 
     @Override
-    public List<UserDto> read(UserDto userDto) {
+    public List<UserResponseDto> read(UserDto userDto) {
         try {
             return filterUsers(userDto, userRepository.findAll())
                     .stream()
-                    .map(UserDto::of)
+                    .map(UserResponseDto::of)
                     .toList();
         } catch (MethodArgumentTypeMismatchException e) {
             throw new RuntimeException(e.getMessage());
@@ -42,13 +43,16 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
     }
 
     @Override
-    public UserDto update(UserDto userDto, Long id) {
+    public UserResponseDto update(UserDto userDto, Long id) {
         try {
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+            if (userDto.getName() != null) {
+                user.setName(userDto.getName());
+            }
             if (userDto.getUsername() != null) {
                 if (userRepository.existsByUsername(userDto.getUsername())) {
-                    throw new IllegalArgumentException("Usuario ya existe");
+                    throw new IllegalArgumentException("Ya existe un usuario con ese nombre de usuario, intente con otro");
                 }
                 user.setUsername(userDto.getUsername());
             }
@@ -56,7 +60,7 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
                 user.setPassword(passwordEncoder.encode(userDto.getPassword()));
             }
             user = userRepository.save(user);
-            return UserDto.of(user);
+            return UserResponseDto.of(user);
         } catch (MethodArgumentTypeMismatchException e) {
             throw new NotFoundException(e.getMessage());
         }
@@ -90,6 +94,8 @@ public class UserService implements ICrudService<UserDto, UserDto, Long>, UserDe
         List<User> filteredUsers = users.stream()
                 .filter(user -> userDto.getId() == null ||
                         user.getId().equals(userDto.getId()))
+                .filter(user -> userDto.getName() == null ||
+                        user.getName().toLowerCase().contains(userDto.getName().toLowerCase()))
                 .filter(user -> userDto.getUsername() == null ||
                         user.getUsername().toLowerCase().contains((userDto.getUsername().toLowerCase())))
                 .filter(user -> userDto.getRole() == null ||

@@ -1,6 +1,7 @@
 package com.virgen_lourdes.minimarket.controller;
 
 import com.virgen_lourdes.minimarket.dto.UserDto;
+import com.virgen_lourdes.minimarket.dto.responseDto.UserResponseDto;
 import com.virgen_lourdes.minimarket.service.ICrudService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,15 +14,15 @@ import java.util.List;
 public class UserController {
 
     @Autowired
-    private ICrudService<UserDto, UserDto, Long> userService;
+    private ICrudService<UserDto, UserResponseDto, Long> userService;
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers(@ModelAttribute UserDto userDto) {
+    public ResponseEntity<List<UserResponseDto>> getAllUsers(@ModelAttribute UserDto userDto) {
         return ResponseEntity.ok(userService.read(userDto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.update(userDto, id));
     }
 

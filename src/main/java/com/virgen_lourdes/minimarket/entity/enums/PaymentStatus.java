@@ -1,6 +1,6 @@
 package com.virgen_lourdes.minimarket.entity.enums;
 
-public enum Status {
+public enum PaymentStatus {
 
     PENDING,
     PAID,

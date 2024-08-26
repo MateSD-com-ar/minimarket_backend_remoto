@@ -1,7 +1,7 @@
 package com.virgen_lourdes.minimarket.dto.requestDto;
 
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
-import com.virgen_lourdes.minimarket.entity.enums.Status;
+import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +29,7 @@ public class SaleRequestDto {
     private Double interest;
     private Double subtotal;
     private Double total;
-    private Status status;
+    private PaymentStatus paymentStatus;
 
     @NotNull(message = "La venta debe tener un empleado vendedor asociado")
     private Long userId;

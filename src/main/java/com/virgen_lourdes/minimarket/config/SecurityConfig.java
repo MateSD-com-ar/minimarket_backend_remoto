@@ -5,6 +5,7 @@ import com.virgen_lourdes.minimarket.jwt.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,10 +32,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
                     auth
-                            .requestMatchers("/api/auth/**").permitAll()
+                            .requestMatchers("/api/auth/register").hasAuthority(Role.ADMIN.name())
+                            .requestMatchers("/api/auth/login").permitAll()
                             .requestMatchers("/api/users/**").hasAuthority(Role.ADMIN.name())
-                            .requestMatchers("/products/**").permitAll()
-                            .anyRequest().permitAll();
+                            .requestMatchers(HttpMethod.POST, "/products/**").hasAuthority(Role.ADMIN.name())
+                            .requestMatchers(HttpMethod.PUT, "/products/**").hasAuthority(Role.ADMIN.name())
+                            .requestMatchers(HttpMethod.DELETE, "/products/**").hasAuthority(Role.ADMIN.name())
+                            .requestMatchers( "/health").permitAll()
+                            .anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

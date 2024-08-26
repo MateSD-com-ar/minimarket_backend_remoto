@@ -31,6 +31,9 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "El nombre no puede estar vacio")
+    private String name;
+
     @NotBlank(message = "El username no puede estar vacio")
     @Column(nullable = false, unique = true)
     private String username;

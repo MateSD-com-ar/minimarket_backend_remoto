@@ -1,5 +1,6 @@
 package com.virgen_lourdes.minimarket.auth;
 
+import com.virgen_lourdes.minimarket.dto.responseDto.UserResponseDto;
 import com.virgen_lourdes.minimarket.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
 
     private String accessToken;
-    private User user;
+    private UserResponseDto user;
 
 }

@@ -15,6 +15,10 @@ import lombok.*;
 @AllArgsConstructor
 public class RegisterRequest {
 
+    @NotBlank(message = "El nombre es requerido")
+    @Size(min = 3, message = "El nombre debe tener al menos 3 caracteres")
+    private String name;
+
     @NotBlank(message = "El nombre de usuario es requerido")
     @Size(min = 3, message = "El nombre de usuario debe tener al menos 3 caracteres")
     private String username;
