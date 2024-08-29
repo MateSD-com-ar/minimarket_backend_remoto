@@ -1,7 +1,10 @@
 package com.virgen_lourdes.minimarket.utils;
 
+import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.User;
 import com.virgen_lourdes.minimarket.entity.enums.Role;
+import com.virgen_lourdes.minimarket.entity.enums.RoleProduct;
+import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.repository.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -15,6 +18,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private IUserRepository userRepository;
+
+    @Autowired
+    private IProductsRepository productsRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -56,6 +62,26 @@ public class DataLoader implements CommandLineRunner {
             user3.setCreatedAt(LocalDateTime.now());
             user3.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user3);
+        }
+        if(productsRepository.count()==0){
+            Product product1 = new Product();
+            product1.setName("carne");
+            product1.setDescription("carne");
+            product1.setCode("");
+            product1.setPrice(0.0);
+            product1.setRoleProduct(RoleProduct.Carniceria);
+            product1.setUnitMeasure("");
+            product1.setStock(0);
+            productsRepository.save(product1);
+            Product product2 = new Product();
+            product2.setName("verduleria");
+            product2.setDescription("verduleria");
+            product2.setCode("");
+            product2.setPrice(0.0);
+            product2.setRoleProduct(RoleProduct.Verduleria);
+            product2.setUnitMeasure("");
+            product2.setStock(0);
+            productsRepository.save(product2);
         }
     }
 }
