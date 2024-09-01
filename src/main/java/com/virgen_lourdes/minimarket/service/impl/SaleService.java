@@ -2,6 +2,7 @@ package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto;
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleRequestDto;
+import com.virgen_lourdes.minimarket.dto.responseDto.SaleDetailsProductResponseDto;
 import com.virgen_lourdes.minimarket.dto.responseDto.SaleResponseDto;
 import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.Sale;
@@ -24,6 +25,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 @Service
 public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto, Long> {
@@ -165,10 +167,25 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
             }
 
             sale = saleRepository.save(sale);
-            return SaleResponseDto.of(sale);
+            Logger.getLogger("SaleService").info("Venta actualizada: " + sale.getSaleDetailsProducts().size());
+            SaleResponseDto saleResponseDto = SaleResponseDto.of(sale);
+            saleResponseDto.setSaleDetailsProductsDto(toListDetailsDto(sale));
+
+//            if (sale.getPaymentStatus().equals(PaymentStatus.PAID) || sale.getPaymentStatus().equals(PaymentStatus.CREDIT)) {
+//                saleResponseDto.setSaleDetailsProductsDto(toListDetailsDto(sale));
+//            }
+
+            return saleResponseDto;
+//            return SaleResponseDto.of(sale);
         } catch (MethodArgumentTypeMismatchException e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    List<SaleDetailsProductResponseDto> toListDetailsDto(Sale sale) {
+        List<SaleDetailsProduct> filteredDetails = sale.getSaleDetailsProducts()
+                .stream().filter(item -> item.getTotalPriceDetail() > 0).toList();
+        return filteredDetails.stream().map(SaleDetailsProductResponseDto::of).toList();
     }
 
     public void updateSaleDetails(Sale sale, List<SaleDetailsProductRequestDto> newDetailsDtos) {

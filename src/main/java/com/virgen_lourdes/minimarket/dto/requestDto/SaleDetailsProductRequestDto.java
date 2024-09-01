@@ -12,14 +12,20 @@ import lombok.NoArgsConstructor;
 public class SaleDetailsProductRequestDto {
 
     private Long idDetails;
+
     @NotNull(message = "Quantity must not be null")
     @Positive(message = "Quantity must be greater than zero")
     private Double quantity;
+
     @Positive(message = "UnitPrice must be greater than zero")
     private Double unitPrice;
+
     @Positive(message = "TotalPriceDetail must be greater than zero")
     private Double totalPriceDetail;
+
     @NotNull(message = "Product ID must not be null")
     private Long product;
+
+    private String unitMeasure;
 
 }

@@ -1,7 +1,6 @@
 package com.virgen_lourdes.minimarket.dto.responseDto;
 
 import com.virgen_lourdes.minimarket.entity.Sale;
-import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
 import lombok.Data;
@@ -25,7 +24,7 @@ public class SaleResponseDto {
     private Double total;
     private PaymentStatus paymentStatus;
     private UserResponseDto user;
-    private List<SaleDetailsProduct> saleDetailsProducts;
+    private List<SaleDetailsProductResponseDto> saleDetailsProductsDto;
     private LocalDateTime createdAt;
 
     public SaleResponseDto(Sale sale){
@@ -40,12 +39,14 @@ public class SaleResponseDto {
         this.total = sale.getTotal();
         this.paymentStatus = sale.getPaymentStatus();
         this.user = UserResponseDto.of(sale.getUser());
-        this.saleDetailsProducts = sale.getSaleDetailsProducts();
+        this.saleDetailsProductsDto = sale.getSaleDetailsProducts().stream()
+                .map(SaleDetailsProductResponseDto::of).toList();
         this.createdAt = sale.getCreatedAt();
+
+
     }
 
     public static SaleResponseDto of(Sale sale){
         return new SaleResponseDto(sale);
     }
-
 }

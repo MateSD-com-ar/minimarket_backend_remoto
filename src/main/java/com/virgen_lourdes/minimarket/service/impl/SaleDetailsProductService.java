@@ -43,8 +43,8 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
 
     @Override
     public SaleDetailsProduct getDetailsById(Long idDetails) {
-        SaleDetailsProduct saleDetailsProduct = saleDetailsProductRepository.findById(idDetails).orElseThrow(() -> new RuntimeException("Details not found"));
-        return saleDetailsProduct;
+        return saleDetailsProductRepository.findById(idDetails)
+                .orElseThrow(() -> new RuntimeException("Details not found"));
     }
 
     @Override
@@ -53,11 +53,22 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             Product product = productsRepository.findById(item.getProduct())
                     .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found"));
             SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
+
+            // Si el producto es carne o verdura se establece el precio que viene de la solictud, sino se establece el
+            // mismo precio del producto
+            System.out.println("NOMBRE DEL PRODUCTO: " + product.getName());
+            if (product.getName().equals("carne") || product.getName().equals("verduleria")) {
+                saleDetailsProduct.setUnitMeasure(item.getUnitMeasure());
+                saleDetailsProduct.setUnitPrice(item.getUnitPrice());
+            } else {
+                saleDetailsProduct.setUnitPrice(product.getPrice());
+            }
+
             saleDetailsProduct.setQuantity(item.getQuantity());
-            saleDetailsProduct.setUnitPrice(product.getPrice());
             saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
             saleDetailsProduct.setProduct(product);
             saleDetailsProduct.setSale(sale);
+            saleDetailsProductRepository.save(saleDetailsProduct);
 
             return saleDetailsProduct;
         }).collect(Collectors.toList());
@@ -76,18 +87,40 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
         }
     }
 
+    /**
+     * Método para editar los detalles de una venta, permite editar los atributos de precio unitario y unida de medida
+     * solo si los productos son carnes o verduras.
+     *
+     * @param idDetails                    id de los detalles de la venta a editar
+     * @param saleDetailsProductRequestDto objeto con los nuevos datos a editar
+     * @throws ProductNotFoundException si el producto no existe o no se encuentra
+     * @throws RuntimeException         si ocurre un error al editar los detalles
+     */
     @Override
     public void editDetails(Long idDetails, SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
         try {
-            SaleDetailsProduct saleDetailsProduct = saleDetailsProductRepository.findById(idDetails)
-                    .orElseThrow(() -> new RuntimeException("Details not found"));
+            SaleDetailsProduct saleDetailsProduct = getDetailsById(idDetails);
             if (saleDetailsProductRequestDto.getProduct() != null) {
                 saleDetailsProduct.setProduct(productsRepository.findById(saleDetailsProductRequestDto.getProduct())
                         .orElseThrow(() -> new ProductNotFoundException("Product does not exist or product not found")));
             }
-            if (saleDetailsProductRequestDto.getUnitPrice() != null) {
-                saleDetailsProduct.setUnitPrice(saleDetailsProduct.getProduct().getPrice());
+
+            Product product = saleDetailsProduct.getProduct();
+            String productName = product.getName();
+
+            if ("verduleria".equals(productName) || "carne".equals(productName)) {
+                if (saleDetailsProductRequestDto.getUnitPrice() != null) {
+                    saleDetailsProduct.setUnitPrice(saleDetailsProductRequestDto.getUnitPrice());
+                }
+                if (saleDetailsProductRequestDto.getUnitMeasure() != null) {
+                    product.setUnitMeasure(saleDetailsProductRequestDto.getUnitMeasure());
+                }
+            } else {
+                if (saleDetailsProductRequestDto.getUnitPrice() != null || saleDetailsProductRequestDto.getUnitMeasure() != null) {
+                    throw new RuntimeException("Unit price or measure cannot be modified for this product");
+                }
             }
+
             if (saleDetailsProductRequestDto.getQuantity() != null) {
                 saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
                 saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
