@@ -2,10 +2,7 @@ package com.virgen_lourdes.minimarket.dto.requestDto;
 
 import com.virgen_lourdes.minimarket.entity.enums.PaymentMethod;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,7 +22,11 @@ public class SaleRequestDto {
     private String cuil;
     private LocalDateTime paymentDate;
     private PaymentMethod paymentMethod;
+
+    @PositiveOrZero(message = "El descuento debe ser un valor positivo o cero")
     private Double discount;
+
+    @PositiveOrZero(message = "El interés debe ser un valor positivo o cero")
     private Double interest;
     private Double subtotal;
     private Double total;
@@ -34,8 +35,8 @@ public class SaleRequestDto {
     @NotNull(message = "La venta debe tener un empleado vendedor asociado")
     private Long userId;
 
-    @NotEmpty(message = "La venta debe tener al menos un producto")
-    private List<SaleDetailsProductRequestDto> saleDetailsProducts;
+//    @NotEmpty(message = "La venta debe tener al menos un producto")
+//    private List<SaleDetailsProductRequestDto> saleDetailsProducts;
 
     private LocalDateTime createdAt;
 

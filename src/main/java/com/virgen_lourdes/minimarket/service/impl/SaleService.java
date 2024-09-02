@@ -2,6 +2,7 @@ package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto;
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleRequestDto;
+import com.virgen_lourdes.minimarket.dto.responseDto.SaleDetailsProductResponseDto;
 import com.virgen_lourdes.minimarket.dto.responseDto.SaleResponseDto;
 import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.Sale;
@@ -15,6 +16,7 @@ import com.virgen_lourdes.minimarket.repository.ISaleDetailsProductRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.repository.IUserRepository;
 import com.virgen_lourdes.minimarket.service.ICrudService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,12 +46,11 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
     private IProductsRepository productsRepository;
 
     @Override
+    @Transactional
     public SaleResponseDto create(SaleRequestDto saleRequestDto) {
         try {
             User user = userRepository.findById(saleRequestDto.getUserId())
                     .orElseThrow(() -> new NotFoundException("No se encontró al empleado vendedor con el ID proporcionado"));
-
-//            List<SaleDetailsProduct> saleDetailsProduct = createDetailsProduct(saleRequestDto.getSaleDetailsProducts());
 
             Sale sale = Sale.builder()
                     .CUIL(saleRequestDto.getCuil())
@@ -57,29 +58,11 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                     .paymentStatus(PaymentStatus.PENDING)
                     .user(user)
                     .build();
-
-            List<SaleDetailsProduct> saleDetailsProduct = createDetailsProduct(saleRequestDto.getSaleDetailsProducts(), sale);
-
-            Double total = calculateTotal(saleDetailsProduct);
-
-            sale.setSubtotal(total);
-            sale.setTotal(total);
-            sale.setSaleDetailsProducts(saleDetailsProduct);
-
-            saleRepository.save(sale);
+            sale = saleRepository.save(sale);
             return SaleResponseDto.of(sale);
         } catch (ValidationException e) {
             throw new RuntimeException(e.getMessage());
         }
-    }
-
-    private Double calculateTotal(List<SaleDetailsProduct> saleDetailsProducts) {
-        Double totalPrice = saleDetailsProducts.stream()
-                .mapToDouble(SaleDetailsProduct::getTotalPriceDetail)
-                .sum();
-
-        DecimalFormat df = new DecimalFormat("#.##");
-        return Double.parseDouble(df.format(totalPrice));
     }
 
     @Override
@@ -99,6 +82,13 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
         try {
             Sale sale = saleRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("No se encontró la venta con el ID proporcionado"));
+
+            // Verificar si el total de la venta no es mayor a 0 para no realizar modificaciones
+            if (sale.getTotal() == null || sale.getTotal() == 0) {
+                throw new ValidationException("No se puede modificar una venta que no tiene detalles ni un monto total");
+            }
+
+            // Actualizar CUIL si se proporciona
             if (saleRequestDto.getCuil() != null) sale.setCUIL(saleRequestDto.getCuil());
 
             // Actualizar interes si se proporciona y si la venta está en crédito
@@ -107,16 +97,18 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                 PaymentStatus requestedPaymentStatus = saleRequestDto.getPaymentStatus();
 
                 if (PaymentStatus.CREDIT.equals(currentPaymentStatus) || PaymentStatus.CREDIT.equals(requestedPaymentStatus)) {
-//                    sale.setTotal(sale.getTotal() + saleRequestDto.getInterest());
                     sale.setInterest(saleRequestDto.getInterest());
                 } else {
                     throw new ValidationException("La venta necesita estar a crédito para agregar intereses");
                 }
             }
 
-            // Actualizar descuento si se proporciona, a su vez actualizar el total de la venta
+            // Actualizar descuento si se proporciona
             if (saleRequestDto.getDiscount() != null) {
-//                sale.setTotal(sale.getTotal() - saleRequestDto.getDiscount());
+                // El descuento no puede ser mayor al total de la venta
+                if (saleRequestDto.getDiscount() > sale.getTotal()) {
+                    throw new ValidationException("El interés no puede ser mayor al total de la venta");
+                }
                 sale.setDiscount(saleRequestDto.getDiscount());
             }
 
@@ -143,18 +135,6 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                 }
             }
 
-            // Actualizar los detalles de la venta si se proporciona y si el estado de la venta es pendiente
-            if (saleRequestDto.getSaleDetailsProducts() != null) {
-                if (sale.getPaymentStatus().equals(PaymentStatus.PENDING)) {
-                    updateSaleDetails(sale, saleRequestDto.getSaleDetailsProducts());
-                    sale.setSubtotal(calculateTotal(sale.getSaleDetailsProducts()));
-                } else {
-                    throw new ValidationException("No se pueden actualizar los productos de una venta cerrada");
-                }
-            }
-            if (saleRequestDto.getSubtotal() != null) sale.setSubtotal(saleRequestDto.getSubtotal());
-            if (saleRequestDto.getTotal() != null) sale.setTotal(saleRequestDto.getTotal());
-
             // Actualizar precio total de la venta
             if (sale.getInterest() != null) {
                 sale.setTotal(sale.getSubtotal() + sale.getInterest());
@@ -165,46 +145,56 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
             }
 
             sale = saleRepository.save(sale);
-            return SaleResponseDto.of(sale);
+            SaleResponseDto saleResponseDto = SaleResponseDto.of(sale);
+            saleResponseDto.setSaleDetailsProducts(toListDetailsDto(sale));
+
+            return saleResponseDto;
+//            return SaleResponseDto.of(sale);
         } catch (MethodArgumentTypeMismatchException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public void updateSaleDetails(Sale sale, List<SaleDetailsProductRequestDto> newDetailsDtos) {
-        List<SaleDetailsProduct> existingDetails = sale.getSaleDetailsProducts();
-
-        // Filtrar los IDs de detalles existentes
-        List<Long> dtoIds = newDetailsDtos.stream()
-                .map(SaleDetailsProductRequestDto::getIdDetails)
-                .filter(Objects::nonNull)
-                .toList();
-
-        // Filtrar los detalles existentes que no están en la lista de IDs
-        List<SaleDetailsProduct> detailsToRemove = existingDetails.stream()
-                .filter(detail -> !dtoIds.contains(detail.getIdDetails()))
-                .toList();
-
-        // Eliminar los detalles que ya no están presentes en la lista de DTOs
-        detailsToRemove.forEach(detail -> sale.getSaleDetailsProducts().remove(detail));
-
-        // Recorrer la lista de nuevos detalles y actualizar o crear los detalles de la venta
-        for (SaleDetailsProductRequestDto newDetailsDto : newDetailsDtos) {
-            if (newDetailsDto.getIdDetails() != null) {
-                saleDetailsProductService.editDetails(newDetailsDto.getIdDetails(), newDetailsDto);
-            } else {
-                Product product = productsRepository.findById(newDetailsDto.getProduct())
-                        .orElseThrow(() -> new NotFoundException("Product does not exist or product not found"));
-                SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
-                saleDetailsProduct.setQuantity(newDetailsDto.getQuantity());
-                saleDetailsProduct.setUnitPrice(product.getPrice());
-                saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
-                saleDetailsProduct.setProduct(product);
-                saleDetailsProduct.setSale(sale);
-                sale.getSaleDetailsProducts().add(saleDetailsProduct);
-            }
-        }
+    List<SaleDetailsProductResponseDto> toListDetailsDto(Sale sale) {
+        List<SaleDetailsProduct> filteredDetails = sale.getSaleDetailsProducts()
+                .stream().filter(item -> item.getTotalPriceDetail() > 0).toList();
+        return filteredDetails.stream().map(SaleDetailsProductResponseDto::of).toList();
     }
+
+//    public void updateSaleDetails(Sale sale, List<SaleDetailsProductRequestDto> newDetailsDtos) {
+//        List<SaleDetailsProduct> existingDetails = sale.getSaleDetailsProducts();
+//
+    // Filtrar los IDs de detalles existentes
+//        List<Long> dtoIds = newDetailsDtos.stream()
+//                .map(SaleDetailsProductRequestDto::getIdDetails)
+//                .filter(Objects::nonNull)
+//                .toList();
+//
+//        // Filtrar los detalles existentes que no están en la lista de IDs
+//        List<SaleDetailsProduct> detailsToRemove = existingDetails.stream()
+//                .filter(detail -> !dtoIds.contains(detail.getIdDetails()))
+//                .toList();
+//
+//        // Eliminar los detalles que ya no están presentes en la lista de DTOs
+//        detailsToRemove.forEach(detail -> sale.getSaleDetailsProducts().remove(detail));
+//
+//        // Recorrer la lista de nuevos detalles y actualizar o crear los detalles de la venta
+//        for (SaleDetailsProductRequestDto newDetailsDto : newDetailsDtos) {
+//            if (newDetailsDto.getIdDetails() != null) {
+//                saleDetailsProductService.editDetails(newDetailsDto.getIdDetails(), newDetailsDto);
+//            } else {
+//                Product product = productsRepository.findById(newDetailsDto.getProduct())
+//                        .orElseThrow(() -> new NotFoundException("Product does not exist or product not found"));
+//                SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
+//                saleDetailsProduct.setQuantity(newDetailsDto.getQuantity());
+//                saleDetailsProduct.setUnitPrice(product.getPrice());
+//                saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
+//                saleDetailsProduct.setProduct(product);
+//                saleDetailsProduct.setSale(sale);
+//                sale.getSaleDetailsProducts().add(saleDetailsProduct);
+//            }
+//        }
+//    }
 
     @Override
     public void delete(Long id) {
@@ -241,7 +231,7 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
     }
 
 
-    List<SaleDetailsProduct> createDetailsProduct(List<SaleDetailsProductRequestDto> saleDetailsProducts, Sale sale) {
-        return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
-    }
+//    List<SaleDetailsProduct> createDetailsProduct(List<SaleDetailsProductRequestDto> saleDetailsProducts, Sale sale) {
+//        return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
+//    }
 }

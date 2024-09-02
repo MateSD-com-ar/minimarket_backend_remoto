@@ -20,6 +20,7 @@ public class SaleDetailsProduct {
     private Double quantity;
     private Double unitPrice;
     private Double totalPriceDetail;
+    private String unitMeasure;
 
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
