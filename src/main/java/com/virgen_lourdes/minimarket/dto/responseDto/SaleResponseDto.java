@@ -24,10 +24,10 @@ public class SaleResponseDto {
     private Double total;
     private PaymentStatus paymentStatus;
     private UserResponseDto user;
-    private List<SaleDetailsProductResponseDto> saleDetailsProductsDto;
+    private List<SaleDetailsProductResponseDto> saleDetailsProducts;
     private LocalDateTime createdAt;
 
-    public SaleResponseDto(Sale sale){
+    public SaleResponseDto(Sale sale) {
         this.id = sale.getId();
         this.client = sale.getClient();
         this.CUIL = sale.getCUIL();
@@ -39,14 +39,12 @@ public class SaleResponseDto {
         this.total = sale.getTotal();
         this.paymentStatus = sale.getPaymentStatus();
         this.user = UserResponseDto.of(sale.getUser());
-        this.saleDetailsProductsDto = sale.getSaleDetailsProducts().stream()
+        this.saleDetailsProducts = sale.getSaleDetailsProducts() == null? null : sale.getSaleDetailsProducts().stream()
                 .map(SaleDetailsProductResponseDto::of).toList();
         this.createdAt = sale.getCreatedAt();
-
-
     }
 
-    public static SaleResponseDto of(Sale sale){
+    public static SaleResponseDto of(Sale sale) {
         return new SaleResponseDto(sale);
     }
 }

@@ -28,4 +28,6 @@ public class SaleDetailsProductRequestDto {
 
     private String unitMeasure;
 
+    private Long saleId;
+
 }
