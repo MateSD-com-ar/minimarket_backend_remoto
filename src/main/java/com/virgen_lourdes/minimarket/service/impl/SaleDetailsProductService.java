@@ -12,6 +12,7 @@ import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleDetailsProductRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.service.ISaleDetailsProductService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +49,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     @Override
+    @Transactional
     public List<SaleDetailsProductResponseDto> createDetails(List<SaleDetailsProductRequestDto> saleDetailsProductRequestDto) {
         try {
             List<SaleDetailsProduct> saleDetailsProductList = saleDetailsProductRequestDto.stream().map(item -> {
@@ -65,7 +67,10 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProductRepository.saveAll(saleDetailsProductList);
 
             // Actualizar el precio total de la venta
-            updateSaleTotalPrice(saleDetailsProductList.get(0).getSale());
+//            Sale sale = saleRepository.findById(saleDetailsProductList.get(0).getSale().getId())
+//                            .orElseThrow(() -> new NotFoundException("No existe una venta con el id proporcionado"));
+            Sale sale = saleDetailsProductList.get(0).getSale();
+            updateSaleTotalPrice(sale, saleDetailsProductList);
 
             // Actualizar el stock de productos
 //            updateProductStock(saleDetailsProductList.get(0).getSale());
@@ -83,9 +88,9 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
         }
     }
 
-    private void updateSaleTotalPrice(Sale sale) {
+    private void updateSaleTotalPrice(Sale sale, List<SaleDetailsProduct> saleDetailsProductList) {
         // Calcula el subtotal sumando los precios totales de los detalles de la venta
-        double subtotal = sale.getSaleDetailsProducts().stream()
+        double subtotal = saleDetailsProductList.stream()
                 .mapToDouble(SaleDetailsProduct::getTotalPriceDetail)
                 .sum();
         sale.setSubtotal(subtotal);
@@ -163,8 +168,9 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
         saleDetailsProduct.setSale(sale);
 
         // Actualizar el stock del producto
-        product.setStock((int) (product.getStock() - item.getQuantity()));
-
+        if (product.getRoleProduct().toString().equals("Almacen")) {
+            product.setStock((int) (product.getStock() - item.getQuantity()));
+        }
         return saleDetailsProduct;
     }
 
@@ -178,7 +184,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProductRepository.deleteById(idDetails);
 
             // Actualizar el precio total de la venta
-            updateSaleTotalPrice(sale);
+            updateSaleTotalPrice(sale, sale.getSaleDetailsProducts());
 
             // Actualizar stock de productos si es de categoría Almacen
             if (product.getRoleProduct().toString().equals("Almacen")) {
@@ -203,6 +209,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
      * @throws RuntimeException         si ocurre un error al editar los detalles
      */
     @Override
+    @Transactional
     public void editDetails(Long idDetails, SaleDetailsProductRequestDto saleDetailsProductRequestDto) {
         try {
             SaleDetailsProduct saleDetailsProduct = getDetailsById(idDetails);
@@ -242,7 +249,9 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProductRepository.save(saleDetailsProduct);
 
             // Actualizar el precio total de la venta
-            updateSaleTotalPrice(saleDetailsProduct.getSale());
+            Sale sale = saleDetailsProduct.getSale();
+            List<SaleDetailsProduct> saleDetailsProductList = sale.getSaleDetailsProducts();
+            updateSaleTotalPrice(sale, saleDetailsProductList);
 
         } catch (ProductNotFoundException e) {
             throw new ProductNotFoundException(e.getMessage());
