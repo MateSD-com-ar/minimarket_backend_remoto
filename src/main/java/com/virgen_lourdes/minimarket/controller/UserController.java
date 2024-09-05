@@ -31,4 +31,10 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.ok("Usuario eliminado correctamente");
     }
+
+    @DeleteMapping("/deactivate/{id}")
+    public ResponseEntity<String> deactivateUser(@PathVariable Long id) {
+        userService.deactivateUser(id);
+        return ResponseEntity.ok("Usuario desactivado correctamente");
+    }
 }

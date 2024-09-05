@@ -68,7 +68,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             updateSaleTotalPrice(saleDetailsProductList.get(0).getSale());
 
             // Actualizar el stock de productos
-            updateProductStock(saleDetailsProductList.get(0).getSale());
+//            updateProductStock(saleDetailsProductList.get(0).getSale());
 
             return saleDetailsProductList.stream()
                     .map(SaleDetailsProductResponseDto::of).collect(Collectors.toList());
@@ -102,7 +102,38 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     private static SaleDetailsProduct getSaleDetailsProduct(SaleDetailsProductRequestDto item, Product product, Sale sale) {
+
+        /* Buscar si el producto ya existe en los detalles de la venta */
+        SaleDetailsProduct existingDetail = sale.getSaleDetailsProducts().stream()
+                .filter(detail -> detail.getProduct().getName().equals(product.getName()))
+                .findFirst()
+                .orElse(null);
+
+        /* Si ya existe, actualizar la cantidad y el precio */
+        if (existingDetail != null) {
+            // Actualizar la cantidad
+            double newQuantity = existingDetail.getQuantity() + item.getQuantity();
+
+            /* Validación de stock */
+            if (product.getRoleProduct().toString().equals("Almacen")) {
+                if (newQuantity > product.getStock()) {
+                    throw new IllegalArgumentException("No hay suficiente stock del producto");
+                }
+
+                // Actualizar el stock del producto
+                product.setStock((int) ((product.getStock() + existingDetail.getQuantity()) - newQuantity));
+            }
+
+            /* Actualizar la cantidad y el precio total del detalle existente */
+            existingDetail.setQuantity(newQuantity);
+            existingDetail.setTotalPriceDetail(existingDetail.getQuantity() * existingDetail.getUnitPrice());
+
+            return existingDetail;
+        }
+
+        /* Si el producto es nuevo en la venta, crear un nuevo detalle */
         SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
+
         /* Si el producto es carne o verdura se establece el precio que viene de la solicitud, sino se establece el
         mismo precio unitario del producto */
         if (product.getName().equals("carne") || product.getName().equals("verduleria")) {
@@ -110,7 +141,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
                 throw new IllegalArgumentException("El precio unitario es requerido para los productos de carnicería y verdulería");
             }
             if (item.getUnitMeasure() == null) {
-                throw new IllegalArgumentException("La unidad de medida es requerido para los productos de carnicería y verdulería");
+                throw new IllegalArgumentException("La unidad de medida es requerida para los productos de carnicería y verdulería");
             }
             saleDetailsProduct.setUnitMeasure(item.getUnitMeasure());
             saleDetailsProduct.setUnitPrice(item.getUnitPrice());
@@ -118,21 +149,25 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProduct.setUnitPrice(product.getPrice());
         }
 
-        /* Se valida que la cantidad solicitada no sea mayor al stock del producto */
+        /* Validación de stock del producto */
         if (product.getRoleProduct().toString().equals("Almacen")) {
             if (item.getQuantity() > product.getStock()) {
-                System.out.println(product.getStock());
-                System.out.println(item.getQuantity());
                 throw new IllegalArgumentException("No hay suficiente stock del producto");
             }
         }
 
+        // Actualizar la cantidad y el precio total
         saleDetailsProduct.setQuantity(item.getQuantity());
         saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
         saleDetailsProduct.setProduct(product);
         saleDetailsProduct.setSale(sale);
+
+        // Actualizar el stock del producto
+        product.setStock((int) (product.getStock() - item.getQuantity()));
+
         return saleDetailsProduct;
     }
+
 
     @Override
     public void deleteDetails(Long idDetails) {
@@ -215,32 +250,6 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             throw new RuntimeException(e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException("Error edit details. Check that there are no empty fields");
-        }
-    }
-
-    /**
-     * Método para actualizar el stock de los productos cuando se crea un detalle de venta, resta la cantidad solicitada
-     * del stock del producto
-     *
-     * @param sale venta a actualizar
-     */
-    public void updateProductStock(Sale sale) {
-        // Obtiene los detalles de la venta
-        List<SaleDetailsProduct> saleDetailsProducts = sale.getSaleDetailsProducts();
-
-        for (SaleDetailsProduct saleDetailsProduct : saleDetailsProducts) {
-            Product product = saleDetailsProduct.getProduct();
-
-            // Verifica si el producto pertenece a la categoría 'Almacen'
-            if ("Almacen".equalsIgnoreCase(product.getRoleProduct().toString())) {
-                int currentStock = product.getStock();
-                double quantity = saleDetailsProduct.getQuantity();
-                currentStock -= (int) quantity;
-
-                // Establece el nuevo stock y guarda los cambios en el producto
-                product.setStock(currentStock);
-                productsRepository.save(product);
-            }
         }
     }
 }

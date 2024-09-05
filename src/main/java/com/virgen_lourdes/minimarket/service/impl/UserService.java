@@ -71,6 +71,17 @@ public class UserService implements ICrudService<UserDto, UserResponseDto, Long>
         try {
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+            userRepository.delete(user);
+        } catch (MethodArgumentTypeMismatchException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void deactivateUser(Long id) {
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
             user.setIsActive(false);
             userRepository.save(user);
         } catch (MethodArgumentTypeMismatchException e) {
