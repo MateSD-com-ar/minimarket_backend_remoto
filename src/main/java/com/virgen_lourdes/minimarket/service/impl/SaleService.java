@@ -1,10 +1,8 @@
 package com.virgen_lourdes.minimarket.service.impl;
 
-import com.virgen_lourdes.minimarket.dto.requestDto.SaleDetailsProductRequestDto;
 import com.virgen_lourdes.minimarket.dto.requestDto.SaleRequestDto;
 import com.virgen_lourdes.minimarket.dto.responseDto.SaleDetailsProductResponseDto;
 import com.virgen_lourdes.minimarket.dto.responseDto.SaleResponseDto;
-import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.User;
@@ -19,13 +17,13 @@ import com.virgen_lourdes.minimarket.service.ICrudService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto, Long> {
@@ -80,6 +78,11 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
     @Override
     public SaleResponseDto update(SaleRequestDto saleRequestDto, Long id) {
         try {
+            /* Verificar si el usuario tiene el rol de ADMIN */
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean hasRoleAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
             Sale sale = saleRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("No se encontró la venta con el ID proporcionado"));
 
@@ -113,9 +116,29 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
             }
 
             // Actualizar el estado de la venta, el método de pago es requerido
+            // Solo el administrador puede cambiar el estado de la venta a "credito" o "pendiente"
             if (saleRequestDto.getPaymentStatus() != null) {
+                if (hasRoleAdmin) {
+                    if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PENDING) ||
+                            saleRequestDto.getPaymentStatus().equals(PaymentStatus.CREDIT)) {
+                        PaymentStatus paymentStatus = sale.getPaymentStatus();
+                        if (paymentStatus.equals(PaymentStatus.CREDIT) || paymentStatus.equals(PaymentStatus.PAID)) {
+                            if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.CREDIT)) {
+                                sale.setPaymentStatus(saleRequestDto.getPaymentStatus());
+                                sale.setPaymentMethod(PaymentMethod.CURRENT_ACCOUNT);
+                            }
+                            if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PENDING)) {
+                                sale.setPaymentStatus(saleRequestDto.getPaymentStatus());
+                                sale.setPaymentMethod(null);
+                            } else {
+                                throw new ValidationException("Estado de venta inválido");
+                            }
+                        }
+                    }
+                }
+
                 if (sale.getPaymentStatus().equals(PaymentStatus.PAID)) {
-                    throw new ValidationException("No se puede cambiar el estado de una venta pagada");
+                    throw new ValidationException("No tienes permiso para cambiar el estado de una venta pagada");
                 }
                 if (sale.getPaymentStatus().equals(PaymentStatus.CREDIT) && saleRequestDto.getPaymentStatus().equals(PaymentStatus.PENDING)) {
                     throw new ValidationException("No se puede cambiar el estado de la venta a pendiente");
@@ -126,14 +149,19 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                 }
                 if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PAID)) {
                     if (saleRequestDto.getPaymentMethod() != null) {
-                        sale.setPaymentStatus(PaymentStatus.PAID);
-                        sale.setPaymentMethod(saleRequestDto.getPaymentMethod());
-                        sale.setPaymentDate(LocalDateTime.now());
+                        if (saleRequestDto.getPaymentMethod().equals(PaymentMethod.CASH)) {
+                            sale.setPaymentStatus(PaymentStatus.PAID);
+                            sale.setPaymentMethod(saleRequestDto.getPaymentMethod());
+                            sale.setPaymentDate(LocalDateTime.now());
+                        } else {
+                            throw new ValidationException("El método de pago solo puede ser efectivo");
+                        }
                     } else {
                         throw new ValidationException("Se requiere indicar un método de pago para cambiar el estado de la venta");
                     }
                 }
             }
+
 
             // Actualizar precio total de la venta
             if (sale.getInterest() != null) {
@@ -161,46 +189,16 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
         return filteredDetails.stream().map(SaleDetailsProductResponseDto::of).toList();
     }
 
-//    public void updateSaleDetails(Sale sale, List<SaleDetailsProductRequestDto> newDetailsDtos) {
-//        List<SaleDetailsProduct> existingDetails = sale.getSaleDetailsProducts();
-//
-    // Filtrar los IDs de detalles existentes
-//        List<Long> dtoIds = newDetailsDtos.stream()
-//                .map(SaleDetailsProductRequestDto::getIdDetails)
-//                .filter(Objects::nonNull)
-//                .toList();
-//
-//        // Filtrar los detalles existentes que no están en la lista de IDs
-//        List<SaleDetailsProduct> detailsToRemove = existingDetails.stream()
-//                .filter(detail -> !dtoIds.contains(detail.getIdDetails()))
-//                .toList();
-//
-//        // Eliminar los detalles que ya no están presentes en la lista de DTOs
-//        detailsToRemove.forEach(detail -> sale.getSaleDetailsProducts().remove(detail));
-//
-//        // Recorrer la lista de nuevos detalles y actualizar o crear los detalles de la venta
-//        for (SaleDetailsProductRequestDto newDetailsDto : newDetailsDtos) {
-//            if (newDetailsDto.getIdDetails() != null) {
-//                saleDetailsProductService.editDetails(newDetailsDto.getIdDetails(), newDetailsDto);
-//            } else {
-//                Product product = productsRepository.findById(newDetailsDto.getProduct())
-//                        .orElseThrow(() -> new NotFoundException("Product does not exist or product not found"));
-//                SaleDetailsProduct saleDetailsProduct = new SaleDetailsProduct();
-//                saleDetailsProduct.setQuantity(newDetailsDto.getQuantity());
-//                saleDetailsProduct.setUnitPrice(product.getPrice());
-//                saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
-//                saleDetailsProduct.setProduct(product);
-//                saleDetailsProduct.setSale(sale);
-//                sale.getSaleDetailsProducts().add(saleDetailsProduct);
-//            }
-//        }
-//    }
-
     @Override
     public void delete(Long id) {
         Sale sale = saleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No se encontró la venta con el ID proporcionado"));
         saleRepository.delete(sale);
+    }
+
+    @Override
+    public void deactivateUser(Long id) {
+
     }
 
     List<Sale> filterSales(SaleRequestDto saleRequestDto, List<Sale> sales) {
@@ -229,9 +227,4 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
         }
         return filteredSales;
     }
-
-
-//    List<SaleDetailsProduct> createDetailsProduct(List<SaleDetailsProductRequestDto> saleDetailsProducts, Sale sale) {
-//        return saleDetailsProductService.createDetails(saleDetailsProducts, sale);
-//    }
 }
