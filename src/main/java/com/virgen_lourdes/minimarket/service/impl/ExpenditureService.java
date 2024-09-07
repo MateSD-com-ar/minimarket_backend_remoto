@@ -76,7 +76,7 @@ public class ExpenditureService implements IExpenditureService {
     public List<Expenditure> getByDate(LocalDate dateExpenditure) {
         List<Expenditure> expenditureList = expenditureRepository.findByDateExpenditure(dateExpenditure);
         if (expenditureList.isEmpty()) {
-            throw new ExpenditureException("There are no registered expenditure");
+            throw new ExpenditureException("There are no registered expenditures on this date");
         }
         return expenditureList;
     }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -21,60 +22,38 @@ public class ExpenditureController {
 
     @GetMapping("/get")
     public ResponseEntity<?> getAll() {
-        try {
-            List<Expenditure> expenditureList = expenditureService.getAll();
-            return ResponseEntity.ok(expenditureList);
-        } catch (ExpenditureException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        List<Expenditure> expenditureList = expenditureService.getAll();
+        return new ResponseEntity<>(expenditureList, HttpStatus.OK);
     }
 
     @GetMapping("/get/{idExpenditure}")
     public ResponseEntity<?> getById(@PathVariable Long idExpenditure) {
-        try {
-            Expenditure expenditure = expenditureService.getById(idExpenditure);
-            return ResponseEntity.ok(expenditure);
-        } catch (ExpenditureException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        Expenditure expenditure = expenditureService.getById(idExpenditure);
+        return new ResponseEntity<>(expenditure, HttpStatus.OK);
     }
 
     @GetMapping("/get/date")
     public ResponseEntity<?> getByDate(@RequestParam("date") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate dateExpenditure) {
-        try {
-            List<Expenditure> expenditureList = expenditureService.getByDate(dateExpenditure);
-            return ResponseEntity.ok(expenditureList);
-        } catch (ExpenditureException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        List<Expenditure> expenditureList = expenditureService.getByDate(dateExpenditure);
+        return new ResponseEntity<>(expenditureList, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{idExpenditure}")
     public ResponseEntity<?> deleteExpenditure(@PathVariable Long idExpenditure) {
-        try {
-            expenditureService.deletedExpenditure(idExpenditure);
-            return ResponseEntity.ok("Expenditure deleted");
-        } catch (ExpenditureException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        expenditureService.deletedExpenditure(idExpenditure);
+        return ResponseEntity.ok("Expenditure deleted");
     }
 
     @PostMapping("/create")
     public ResponseEntity<?> createExpenditure(@Valid @RequestBody Expenditure expenditure) {
         expenditureService.saveExpenditure(expenditure);
-        return ResponseEntity.ok("Expenditure created");
+        return ResponseEntity.ok(Collections.singletonMap("message", "Expenditure created"));
     }
 
     @PutMapping("/edit/{idExpenditure}")
     public ResponseEntity<?> editExpenditure(@PathVariable Long idExpenditure, @RequestBody Expenditure expenditure) {
-        try {
-            expenditureService.editExpenditure(idExpenditure, expenditure);
-            return ResponseEntity.ok(expenditureService.getById(idExpenditure));
-        } catch (ExpenditureException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        expenditureService.editExpenditure(idExpenditure, expenditure);
+        return ResponseEntity.ok(expenditureService.getById(idExpenditure));
     }
 
 }
