@@ -1,8 +1,6 @@
 package com.virgen_lourdes.minimarket.service.impl;
 
 import com.virgen_lourdes.minimarket.entity.Product;
-import com.virgen_lourdes.minimarket.entity.Sale;
-import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.enums.RoleProduct;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductCreationException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
@@ -84,8 +82,8 @@ public class ProductsService implements IProductService {
             product2.setName(product.getName());
             isUpdated = true;
         }
-        if (product.getDescription() != null) {
-            product2.setDescription(product.getDescription());
+        if (product.getBrand() != null) {
+            product2.setBrand(product.getBrand());
             isUpdated = true;
         }
         if (product.getCode() != null) {

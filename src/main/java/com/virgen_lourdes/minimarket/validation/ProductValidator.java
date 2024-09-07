@@ -21,17 +21,16 @@ public class ProductValidator implements ConstraintValidator<ValidProduct, Produ
 
         if (product.getRoleProduct() == RoleProduct.Verduleria || product.getRoleProduct() == RoleProduct.Carniceria) {
             isValid = product.getName() != null && !product.getName().isEmpty() &&
-                    product.getDescription() != null && !product.getDescription().isEmpty() &&
                     product.getPrice() != null;
 
             if (!isValid) {
                 context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate("Name, description, and price are required for Verduleria or Carniceria")
+                context.buildConstraintViolationWithTemplate("Name and price are required for Verduleria or Carniceria")
                         .addConstraintViolation();
             }
         } else if (product.getRoleProduct() == RoleProduct.Almacen) {
             isValid = product.getName() != null && !product.getName().isEmpty() &&
-                    product.getDescription() != null && !product.getDescription().isEmpty() &&
+                    product.getBrand() != null && !product.getBrand().isEmpty() &&
                     product.getCode() != null && !product.getCode().isEmpty() &&
                     product.getPrice() != null &&
                     product.getStock() > 0;

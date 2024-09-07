@@ -132,7 +132,6 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             /* Actualizar la cantidad y el precio total del detalle existente */
             existingDetail.setQuantity(newQuantity);
             existingDetail.setTotalPriceDetail(existingDetail.getQuantity() * existingDetail.getUnitPrice());
-
             return existingDetail;
         }
 
@@ -166,6 +165,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
         saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
         saleDetailsProduct.setProduct(product);
         saleDetailsProduct.setSale(sale);
+        saleDetailsProduct.setDescription(item.getDescription());
 
         // Actualizar el stock del producto
         if (product.getRoleProduct().toString().equals("Almacen")) {
@@ -222,11 +222,11 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
                     saleDetailsProduct.setUnitPrice(saleDetailsProductRequestDto.getUnitPrice());
                 }
                 if (saleDetailsProductRequestDto.getUnitMeasure() != null) {
-                    product.setUnitMeasure(saleDetailsProductRequestDto.getUnitMeasure());
+                    saleDetailsProduct.setUnitMeasure(saleDetailsProductRequestDto.getUnitMeasure());
                 }
             } else {
                 if (saleDetailsProductRequestDto.getUnitPrice() != null || saleDetailsProductRequestDto.getUnitMeasure() != null) {
-                    throw new IllegalArgumentException("Se requiere el precio unitario y la unidad de medida para este producto");
+                    throw new IllegalArgumentException("Se requiere el precio unitario, la descripcion y la unidad de medida para este producto");
                 }
             }
 
@@ -245,6 +245,9 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
                 }
                 saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
                 saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
+            }
+            if(saleDetailsProductRequestDto.getDescription()!=null){
+                saleDetailsProduct.setDescription(saleDetailsProductRequestDto.getDescription());
             }
             saleDetailsProductRepository.save(saleDetailsProduct);
 
