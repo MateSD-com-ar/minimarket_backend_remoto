@@ -13,6 +13,7 @@ public class SaleDetailsProductResponseDto {
     private double quantity;
     private double unitPrice;
     private double totalPrice;
+    private String description;
     private Product product;
 
     public SaleDetailsProductResponseDto(SaleDetailsProduct saleDetailsProduct) {
@@ -21,6 +22,7 @@ public class SaleDetailsProductResponseDto {
         this.unitPrice = saleDetailsProduct.getUnitPrice();
         this.totalPrice = saleDetailsProduct.getTotalPriceDetail();
         this.product = saleDetailsProduct.getProduct();
+        this.description=saleDetailsProduct.getDescription();
     }
 
     public static SaleDetailsProductResponseDto of(SaleDetailsProduct saleDetailsProduct){

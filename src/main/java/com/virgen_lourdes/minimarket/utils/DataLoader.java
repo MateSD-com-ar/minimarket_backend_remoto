@@ -66,7 +66,7 @@ public class DataLoader implements CommandLineRunner {
         if(productsRepository.count()==0){
             Product product1 = new Product();
             product1.setName("carne");
-            product1.setDescription("carne");
+            product1.setBrand("");
             product1.setCode("");
             product1.setPrice(0.0);
             product1.setRoleProduct(RoleProduct.Carniceria);
@@ -75,7 +75,7 @@ public class DataLoader implements CommandLineRunner {
             productsRepository.save(product1);
             Product product2 = new Product();
             product2.setName("verduleria");
-            product2.setDescription("verduleria");
+            product2.setBrand("");
             product2.setCode("");
             product2.setPrice(0.0);
             product2.setRoleProduct(RoleProduct.Verduleria);

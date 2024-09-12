@@ -21,7 +21,7 @@ public class SaleDetailsProduct {
     private Double unitPrice;
     private Double totalPriceDetail;
     private String unitMeasure;
-
+    private String description;
     @ManyToOne
     @JoinColumn(name = "id_product", nullable = false)
     private Product product;

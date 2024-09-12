@@ -25,9 +25,10 @@ public class SaleDetailsProductRequestDto {
 
     @NotNull(message = "Product ID must not be null")
     private Long product;
-
+    @NotNull(message = "Description must not be null")
+    private String description;
     private String unitMeasure;
-
+    @NotNull(message = "Sale ID must not be null")
     private Long saleId;
 
 }
