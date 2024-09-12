@@ -8,6 +8,5 @@ public interface ICrudService<RequestDto, ResponseDto, I> {
     List<ResponseDto> read(RequestDto requestDto);
     ResponseDto update(RequestDto requestDto, Long id);
     void delete(Long id);
-
     void deactivateUser(Long id);
 }

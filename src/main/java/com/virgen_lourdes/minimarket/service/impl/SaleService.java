@@ -101,6 +101,7 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
                 if (PaymentStatus.CREDIT.equals(currentPaymentStatus) || PaymentStatus.CREDIT.equals(requestedPaymentStatus)) {
                     sale.setInterest(saleRequestDto.getInterest());
+                    sale.setTotal((sale.getTotal() * (saleRequestDto.getInterest() / 100)) + sale.getTotal());
                 } else {
                     throw new ValidationException("La venta necesita estar a crédito para agregar intereses");
                 }
@@ -110,9 +111,10 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
             if (saleRequestDto.getDiscount() != null) {
                 // El descuento no puede ser mayor al total de la venta
                 if (saleRequestDto.getDiscount() > sale.getTotal()) {
-                    throw new ValidationException("El interés no puede ser mayor al total de la venta");
+                    throw new ValidationException("El descuento no puede ser mayor al total de la venta");
                 }
                 sale.setDiscount(saleRequestDto.getDiscount());
+                sale.setTotal(sale.getTotal() - saleRequestDto.getDiscount());
             }
 
             // Actualizar el estado de la venta, el método de pago es requerido
@@ -130,8 +132,6 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                             if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PENDING)) {
                                 sale.setPaymentStatus(saleRequestDto.getPaymentStatus());
                                 sale.setPaymentMethod(null);
-                            } else {
-                                throw new ValidationException("Estado de venta inválido");
                             }
                         }
                     }
@@ -148,13 +148,14 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                     sale.setPaymentMethod(PaymentMethod.CURRENT_ACCOUNT);
                 }
                 if (saleRequestDto.getPaymentStatus().equals(PaymentStatus.PAID)) {
+
                     if (saleRequestDto.getPaymentMethod() != null) {
-                        if (saleRequestDto.getPaymentMethod().equals(PaymentMethod.CASH)) {
+                        if (saleRequestDto.getPaymentMethod() != PaymentMethod.CURRENT_ACCOUNT) {
                             sale.setPaymentStatus(PaymentStatus.PAID);
                             sale.setPaymentMethod(saleRequestDto.getPaymentMethod());
                             sale.setPaymentDate(LocalDateTime.now());
                         } else {
-                            throw new ValidationException("El método de pago solo puede ser efectivo");
+                            throw new ValidationException("El método de pago solo puede ser efectivo, transferencia o tarjeta");
                         }
                     } else {
                         throw new ValidationException("Se requiere indicar un método de pago para cambiar el estado de la venta");
@@ -162,22 +163,11 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
                 }
             }
 
-
-            // Actualizar precio total de la venta
-            if (sale.getInterest() != null) {
-                sale.setTotal(sale.getSubtotal() + sale.getInterest());
-            } else if (sale.getDiscount() != null) {
-                sale.setTotal(sale.getSubtotal() - sale.getDiscount());
-            } else {
-                sale.setTotal(sale.getSubtotal());
-            }
-
             sale = saleRepository.save(sale);
             SaleResponseDto saleResponseDto = SaleResponseDto.of(sale);
             saleResponseDto.setSaleDetailsProducts(toListDetailsDto(sale));
 
             return saleResponseDto;
-//            return SaleResponseDto.of(sale);
         } catch (MethodArgumentTypeMismatchException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -198,7 +188,6 @@ public class SaleService implements ICrudService<SaleRequestDto, SaleResponseDto
 
     @Override
     public void deactivateUser(Long id) {
-
     }
 
     List<Sale> filterSales(SaleRequestDto saleRequestDto, List<Sale> sales) {

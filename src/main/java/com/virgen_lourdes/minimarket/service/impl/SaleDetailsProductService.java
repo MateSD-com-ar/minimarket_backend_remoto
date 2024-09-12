@@ -95,13 +95,13 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
                 .sum();
         sale.setSubtotal(subtotal);
 
-        // Maneja el interés y el descuento, asegurando que no sean nulos
-        double interest = sale.getInterest() != null ? sale.getInterest() : 0.0;
-        double discount = sale.getDiscount() != null ? sale.getDiscount() : 0.0;
+        // Maneja el total inicial, asegurando que no sea nulo
+        double total = sale.getTotal() != null ? sale.getTotal() : 0.0;
 
         // Calcula el total de la venta
-        double total = subtotal + interest - discount;
-        sale.setTotal(total);
+        double newTotal = subtotal + total;
+        sale.setSubtotal(newTotal);
+        sale.setTotal(newTotal);
 
         saleRepository.save(sale);
     }
