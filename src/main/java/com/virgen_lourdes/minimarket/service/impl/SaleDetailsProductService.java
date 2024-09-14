@@ -89,19 +89,13 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     private void updateSaleTotalPrice(Sale sale, List<SaleDetailsProduct> saleDetailsProductList) {
-        // Calcula el subtotal sumando los precios totales de los detalles de la venta
-        double subtotal = saleDetailsProductList.stream()
+        // Calcula el subtotal sumando todos los precios, ya contiene la lista de detalles total de la venta
+        double newSubtotal = saleDetailsProductList.stream()
                 .mapToDouble(SaleDetailsProduct::getTotalPriceDetail)
                 .sum();
-        sale.setSubtotal(subtotal);
 
-        // Maneja el total inicial, asegurando que no sea nulo
-        double total = sale.getTotal() != null ? sale.getTotal() : 0.0;
-
-        // Calcula el total de la venta
-        double newTotal = subtotal + total;
-        sale.setSubtotal(newTotal);
-        sale.setTotal(newTotal);
+        sale.setSubtotal(newSubtotal);
+        sale.setTotal(newSubtotal);
 
         saleRepository.save(sale);
     }
@@ -184,7 +178,10 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProductRepository.deleteById(idDetails);
 
             // Actualizar el precio total de la venta
-            updateSaleTotalPrice(sale, sale.getSaleDetailsProducts());
+            Double total = sale.getTotal() - saleDetailsProduct.getTotalPriceDetail();
+            sale.setSubtotal(total);
+            sale.setTotal(total);
+            saleRepository.save(sale);
 
             // Actualizar stock de productos si es de categoría Almacen
             if (product.getRoleProduct().toString().equals("Almacen")) {
@@ -246,7 +243,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
                 saleDetailsProduct.setQuantity(saleDetailsProductRequestDto.getQuantity());
                 saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
             }
-            if(saleDetailsProductRequestDto.getDescription()!=null){
+            if (saleDetailsProductRequestDto.getDescription() != null) {
                 saleDetailsProduct.setDescription(saleDetailsProductRequestDto.getDescription());
             }
             saleDetailsProductRepository.save(saleDetailsProduct);
