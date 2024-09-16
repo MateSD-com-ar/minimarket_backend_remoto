@@ -67,13 +67,9 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProductRepository.saveAll(saleDetailsProductList);
 
             // Actualizar el precio total de la venta
-//            Sale sale = saleRepository.findById(saleDetailsProductList.get(0).getSale().getId())
-//                            .orElseThrow(() -> new NotFoundException("No existe una venta con el id proporcionado"));
-            Sale sale = saleDetailsProductList.get(0).getSale();
-            updateSaleTotalPrice(sale, saleDetailsProductList);
-
-            // Actualizar el stock de productos
-//            updateProductStock(saleDetailsProductList.get(0).getSale());
+            Sale sale = saleRepository.findById(saleDetailsProductRequestDto.get(0).getSaleId())
+                    .orElseThrow(() -> new NotFoundException("No existe una venta con el id proporcionado"));
+            updateSaleTotalPrice(sale, sale.getSaleDetailsProducts());
 
             return saleDetailsProductList.stream()
                     .map(SaleDetailsProductResponseDto::of).collect(Collectors.toList());
