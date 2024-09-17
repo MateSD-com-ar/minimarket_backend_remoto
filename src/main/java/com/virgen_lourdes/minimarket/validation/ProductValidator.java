@@ -33,7 +33,7 @@ public class ProductValidator implements ConstraintValidator<ValidProduct, Produ
                     product.getBrand() != null && !product.getBrand().isEmpty() &&
                     product.getCode() != null && !product.getCode().isEmpty() &&
                     product.getPrice() != null &&
-                    product.getStock() > 0;
+                    product.getStock() >= 0;
 
             if (!isValid) {
                 context.disableDefaultConstraintViolation();
