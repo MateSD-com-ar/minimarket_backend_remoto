@@ -6,6 +6,7 @@ import com.virgen_lourdes.minimarket.entity.Product;
 import com.virgen_lourdes.minimarket.entity.Sale;
 import com.virgen_lourdes.minimarket.entity.SaleDetailsProduct;
 import com.virgen_lourdes.minimarket.entity.enums.PaymentStatus;
+import com.virgen_lourdes.minimarket.entity.enums.RoleProduct;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.NotFoundException;
 import com.virgen_lourdes.minimarket.exceptions.customExceptions.ProductNotFoundException;
 import com.virgen_lourdes.minimarket.repository.IProductsRepository;
@@ -103,6 +104,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     }
 
     private static SaleDetailsProduct getSaleDetailsProduct(SaleDetailsProductRequestDto item, Product product, Sale sale) {
+        RoleProduct roleAlmacen = RoleProduct.Almacen;
 
         /* Buscar si el producto ya existe en los detalles de la venta */
         SaleDetailsProduct existingDetail = sale.getSaleDetailsProducts().stream()
@@ -112,23 +114,29 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
 
         /* Si ya existe, actualizar la cantidad y el precio */
         if (existingDetail != null) {
-            // Actualizar la cantidad
-            double newQuantity = existingDetail.getQuantity() + item.getQuantity();
+            double unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : existingDetail.getUnitPrice();
+            boolean isSamePrice = existingDetail.getUnitPrice().equals(unitPrice);
 
-            /* Validación de stock */
-            if (product.getRoleProduct().toString().equals("Almacen")) {
-                if (newQuantity > product.getStock()) {
-                    throw new IllegalArgumentException("No hay suficiente stock del producto");
+            if (isSamePrice) {
+                // Actualizar la cantidad
+                double newQuantity = existingDetail.getQuantity() + item.getQuantity();
+
+                /* Validación de stock para productos de almacen */
+                if (roleAlmacen.equals(product.getRoleProduct())) {
+                    if (newQuantity > product.getStock()) {
+                        throw new IllegalArgumentException("No hay suficiente stock del producto");
+                    }
+
+                    // Actualizar el stock del producto
+                    product.setStock((int) ((product.getStock() + existingDetail.getQuantity()) - newQuantity));
                 }
 
-                // Actualizar el stock del producto
-                product.setStock((int) ((product.getStock() + existingDetail.getQuantity()) - newQuantity));
+                /* Actualizar la descripcion, cantidad y precio total del detalle existente */
+                existingDetail.setDescription(item.getDescription());
+                existingDetail.setQuantity(newQuantity);
+                existingDetail.setTotalPriceDetail(existingDetail.getQuantity() * existingDetail.getUnitPrice());
+                return existingDetail;
             }
-
-            /* Actualizar la cantidad y el precio total del detalle existente */
-            existingDetail.setQuantity(newQuantity);
-            existingDetail.setTotalPriceDetail(existingDetail.getQuantity() * existingDetail.getUnitPrice());
-            return existingDetail;
         }
 
         /* Si el producto es nuevo en la venta, crear un nuevo detalle */
@@ -136,7 +144,7 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
 
         /* Si el producto es carne o verdura se establece el precio que viene de la solicitud, sino se establece el
         mismo precio unitario del producto */
-        if (product.getName().equals("carne") || product.getName().equals("verduleria")) {
+        if (!roleAlmacen.equals(product.getRoleProduct())) {
             if (item.getUnitPrice() == null) {
                 throw new IllegalArgumentException("El precio unitario es requerido para los productos de carnicería y verdulería");
             }
@@ -149,24 +157,21 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             saleDetailsProduct.setUnitPrice(product.getPrice());
         }
 
-        /* Validación de stock del producto */
-        if (product.getRoleProduct().toString().equals("Almacen")) {
+        /* Validación y seteo de stock para productos de almacen */
+        if (roleAlmacen.equals(product.getRoleProduct())) {
             if (item.getQuantity() > product.getStock()) {
                 throw new IllegalArgumentException("No hay suficiente stock del producto");
+            } else {
+                product.setStock((int) (product.getStock() - item.getQuantity()));
             }
         }
 
-        // Actualizar la cantidad y el precio total
         saleDetailsProduct.setQuantity(item.getQuantity());
         saleDetailsProduct.setTotalPriceDetail(saleDetailsProduct.getQuantity() * saleDetailsProduct.getUnitPrice());
         saleDetailsProduct.setProduct(product);
         saleDetailsProduct.setSale(sale);
         saleDetailsProduct.setDescription(item.getDescription());
 
-        // Actualizar el stock del producto
-        if (product.getRoleProduct().toString().equals("Almacen")) {
-            product.setStock((int) (product.getStock() - item.getQuantity()));
-        }
         return saleDetailsProduct;
     }
 
