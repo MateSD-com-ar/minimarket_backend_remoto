@@ -12,10 +12,12 @@ import com.virgen_lourdes.minimarket.repository.IProductsRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleDetailsProductRepository;
 import com.virgen_lourdes.minimarket.repository.ISaleRepository;
 import com.virgen_lourdes.minimarket.service.ISaleDetailsProductService;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,8 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
     @Autowired
     private ISaleRepository saleRepository;
 
+    @Autowired
+    EntityManager entityManager;
 
     @Override
     public List<SaleDetailsProduct> getAllDetails() {
@@ -65,11 +69,13 @@ public class SaleDetailsProductService implements ISaleDetailsProductService {
             }).toList();
 
             saleDetailsProductRepository.saveAll(saleDetailsProductList);
+            entityManager.flush();
 
             // Actualizar el precio total de la venta
             Sale sale = saleRepository.findById(saleDetailsProductRequestDto.get(0).getSaleId())
                     .orElseThrow(() -> new NotFoundException("No existe una venta con el id proporcionado"));
-            updateSaleTotalPrice(sale, sale.getSaleDetailsProducts());
+            List<SaleDetailsProduct> saleDetailsProducts = saleDetailsProductRepository.findBySale(sale);
+            updateSaleTotalPrice(sale, saleDetailsProducts);
 
             return saleDetailsProductList.stream()
                     .map(SaleDetailsProductResponseDto::of).collect(Collectors.toList());
