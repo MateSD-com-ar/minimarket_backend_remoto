@@ -30,7 +30,7 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -p5118 root@149.50.132.9 << 'EOF'
-            cd /DeployVirgenLourdes/minimarket_backend_remoto
+            cd /DeployVirgenLourdes/minimarket_backend_remoto/minimarket_virgen_lourdes_backend
             git pull origin master
             docker-compose down
             docker-compose build
