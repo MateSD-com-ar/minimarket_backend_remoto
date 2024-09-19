@@ -20,7 +20,9 @@ jobs:
           distribution: 'temurin'  # Cambia esto a la versión de Java que uses
 
       - name: Build with Maven
-        run: mvn clean package
+        run: |
+          cd minimarket_backend_remoto  # Cambia al directorio donde está el pom.xml
+          mvn clean package
 
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.5.3
