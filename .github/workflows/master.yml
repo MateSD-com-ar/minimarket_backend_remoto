@@ -16,7 +16,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: '17'  # Cambia esto a la versión de Java que uses
+          java-version: '17'
+          distribution: 'temurin'  # Cambia esto a la versión de Java que uses
 
       - name: Build with Maven
         run: mvn clean package
