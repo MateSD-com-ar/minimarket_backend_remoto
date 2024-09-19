@@ -89,7 +89,7 @@ public class GlobalHandlerException {
     @ExceptionHandler(ExpenditureException.class)
     public ResponseEntity<Map<String, String>> handleExpenditureException(ExpenditureException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", ex.getMessage());
+        response.put("mensaje", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }
