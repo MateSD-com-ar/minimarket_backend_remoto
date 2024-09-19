@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  minimarket:
+    container_name: minimarket
+    image: minimarket:1
+    build: minimarket_virgen_lourdes_backend
+    ports:
+      - "8081:8080"
+    environment:
+      - DATABASE_URL=jdbc:mysql://minimarket-mysql:3306/minimarket?createDatabaseIfNotExist=true&serverTimezone=UTC
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=root
+      - JWT_SECRET_KEY=586E3272357538782F413F4428472B4B6250655368566B597033733676397924
+      - JWT_EXPIRATION=54000000
+    restart: always
+    depends_on:
+      - minimarket-mysql
+    networks:
+      - 'minimarket-network' 
+  minimarket-mysql:
+    container_name: minimarket-mysql
+    image: mysql:8.0.33
+    ports:
+      - "3310:3306"
+    environment:
+     - MYSQL_PASSWORD=root
+     - MYSQL_ROOT_PASSWORD=root
+     - MYSQL_DATABASE= minimarket
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    networks:
+      - 'minimarket-network'
+volumes:
+  minimarket-mysql-data:
+  
+networks:
+  minimarket-network:
+
