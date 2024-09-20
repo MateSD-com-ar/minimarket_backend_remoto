@@ -24,7 +24,7 @@ public class AuthController {
 
     @GetMapping("/test")
     public String test(){
-        return "Actualizationn!";
+        return "Deploy update!!";
     }
 
 }
