@@ -21,7 +21,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          cd minimarket_backend_remoto  # Cambia al directorio donde está el pom.xml
+          cd minimarket_backend_remoto/minimarket_virgen_lourdes_backend  
           mvn clean package
 
       - name: Set up SSH key
