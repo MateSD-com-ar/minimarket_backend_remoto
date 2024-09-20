@@ -28,7 +28,8 @@ jobs:
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - run: echo ${{ secrets.SSH_PASSPHRASE }} | ssh-add -
+      - name: Add passphrase for SSH key
+        run: echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add -
       - name: Deploy to server
         run: |
           ssh -p5118 root@149.50.132.9 << 'EOF'
