@@ -27,7 +27,7 @@ jobs:
       - name: Set up known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 149.50.132.9 >> ~/.ssh/known_hosts || true
+          ssh-tt-keyscan -H 149.50.132.9 >> ~/.ssh/known_hosts || true
           chmod 644 ~/.ssh/known_hosts
           cat ~/.ssh/known_hosts
 
