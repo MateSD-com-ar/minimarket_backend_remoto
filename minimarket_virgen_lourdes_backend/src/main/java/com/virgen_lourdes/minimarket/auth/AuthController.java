@@ -24,7 +24,7 @@ public class AuthController {
 
     @GetMapping("/test")
     public String test(){
-        return "Deploy update correctly!! Don't touch the github actions please";
+        return "Deploy update correctly!! Don't touch the github actions please. Understand? LCDM";
     }
 
 }
