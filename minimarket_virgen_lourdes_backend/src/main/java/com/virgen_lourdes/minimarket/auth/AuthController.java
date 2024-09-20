@@ -24,7 +24,7 @@ public class AuthController {
 
     @GetMapping("/test")
     public String test(){
-        return "Congratulations";
+        return "Perfect!";
     }
 
 }
