@@ -23,10 +23,12 @@ jobs:
         run: |
           cd minimarket_virgen_lourdes_backend  
           mvn clean package
+          
       - name: Set up known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H 149.50.132.9 >> ~/.ssh/known_hosts || true
+          
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
