@@ -3,6 +3,6 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /target/minimarket-0.0.1-SNAPSHOT.jar minimarket.jar
+COPY --from=build /target/minimarket-0.0.1-SNAPSHOT.jar mi_app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "minimarket.jar"]
+ENTRYPOINT ["java", "-jar", "mi_app.jar"]

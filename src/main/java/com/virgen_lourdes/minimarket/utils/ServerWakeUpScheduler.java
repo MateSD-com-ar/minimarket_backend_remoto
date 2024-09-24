@@ -13,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 @EnableScheduling
 public class ServerWakeUpScheduler {
 
-    @Value("${SERVER_URL}")
-    private String serverUrl;
+//    @Value("${SERVER_URL}")
+//    private String serverUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -24,9 +24,10 @@ public class ServerWakeUpScheduler {
      * If the request is successful, it prints a message indicating that the server has woken up.
      * If an exception occurs, it prints an error message with the exception details.
      */
-    @Scheduled(fixedRate = 780000, initialDelay = 780000)
+//    @Scheduled(fixedRate = 780000, initialDelay = 780000)
     public void wakeUpServer() {
-        String url = serverUrl + "/health";
+//        String url = serverUrl + "/health";
+        String url = "";
         try {
             String result = restTemplate.getForObject(url, String.class);
             System.out.println("Server woke up: " + result);
