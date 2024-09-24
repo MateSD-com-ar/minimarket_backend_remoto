@@ -37,7 +37,7 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no -p5118 root@149.50.132.9 << 'EOF'
-            cd DeployVirgenLourdes/minimarket_backend_remoto || exit
+            cd DeployVirgenLourdesBack/minimarket_backend_remoto || exit
             git pull origin master
             docker-compose up -d --build
           EOF
