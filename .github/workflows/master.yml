@@ -33,9 +33,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Test SSH Connection
+        run: |
+            ssh -o StrictHostKeyChecking=no -p 5118 root@149.50.132.9 "whoami"
+
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no -p 5118 root@149.50.132.9 << 'EOF'
+            set -e
+            
+            # Listar archivos
+            ls -la
+            
             # Entrar al directorio del repositorio
             cd minimarket_virgen_lourdes_backend
 
@@ -46,8 +55,8 @@ jobs:
             mvn clean package
 
             # Copiar el .jar a la ruta deseada
-            cp -f target/minimarket-0.0.1-SNAPSHOT.jar /opt/minimarket-backend/  # Ajusta el nombre del archivo si es necesario
+            cp -f target/minimarket-0.0.1-SNAPSHOT.jar /opt/minimarket-backend/
 
             # Reiniciar el servicio
-            systemctl restart minimarket-backend.service  # Asegúrate de que este sea el nombre correcto del servicio
+            systemctl restart minimarket-backend.service
           EOF
