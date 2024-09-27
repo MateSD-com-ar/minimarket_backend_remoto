@@ -15,7 +15,7 @@ public class HealthCheckController {
     public String healthCheck() {
         try {
             jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-            return "Database is awake from pipeline!";
+            return "Database is awake - test!";
         } catch (Exception e) {
             return "Database is not awake: " + e.getMessage();
         }
